@@ -148,7 +148,8 @@ if (sidebarToggle && sidebar) {
 const TAB_LABELS = {
   dashboard: "Dashboard",
   tasks: "Tareas y Exámenes",
-  subjects: "Materias y Promedio",
+  subjects: "Materias",
+  grades: "Calificaciones",
   schedule: "Horario Semanal",
   pomodoro: "Modo Enfoque",
 };
@@ -237,14 +238,17 @@ function renderSubjectSelects() {
   const taskSub = document.getElementById("task-subject");
   const filterSub = document.getElementById("filter-subject");
   const gradeSub = document.getElementById("grade-subject");
+  const filterGradeSub = document.getElementById("filter-grade-subject");
   const scheduleSub = document.getElementById("schedule-subject");
 
   const prevFilter = filterSub.value;
+  const prevGradeFilter = filterGradeSub ? filterGradeSub.value : "all";
 
   taskSub.innerHTML = "";
   gradeSub.innerHTML = "";
   scheduleSub.innerHTML = "";
   filterSub.innerHTML = '<option value="all">Todas las materias</option>';
+  if (filterGradeSub) filterGradeSub.innerHTML = '<option value="all">Todas las materias</option>';
 
   if (!state.subjects.length) {
     const opt = document.createElement("option");
@@ -263,11 +267,15 @@ function renderSubjectSelects() {
     taskSub.appendChild(opt.cloneNode(true));
     gradeSub.appendChild(opt.cloneNode(true));
     scheduleSub.appendChild(opt.cloneNode(true));
-    filterSub.appendChild(opt);
+    filterSub.appendChild(opt.cloneNode(true));
+    if (filterGradeSub) filterGradeSub.appendChild(opt);
   });
 
   if ([...filterSub.options].some((o) => o.value === prevFilter)) {
     filterSub.value = prevFilter;
+  }
+  if (filterGradeSub && [...filterGradeSub.options].some((o) => o.value === prevGradeFilter)) {
+    filterGradeSub.value = prevGradeFilter;
   }
 }
 
@@ -400,7 +408,6 @@ function renderSubjects() {
     top.appendChild(delSubBtn);
 
     const avg = getSubjectAverage(sub);
-    const totalWeight = getSubjectWeightSum(sub);
     const metaRow = document.createElement("div");
     metaRow.className = "subject-meta-row";
 
@@ -408,35 +415,102 @@ function renderSubjects() {
     avgEl.className = "subject-avg";
     avgEl.textContent = `Promedio: ${avg !== null ? avg.toFixed(2) : "Sin notas"}`;
 
+    const goGradesBtn = document.createElement("button");
+    goGradesBtn.className = "text-link";
+    goGradesBtn.type = "button";
+    goGradesBtn.textContent = `${sub.grades.length} notas →`;
+    goGradesBtn.addEventListener("click", () => {
+      const filterGradeSub = document.getElementById("filter-grade-subject");
+      const gradeSubSelect = document.getElementById("grade-subject");
+      if (filterGradeSub) filterGradeSub.value = sub.id;
+      if (gradeSubSelect) gradeSubSelect.value = sub.id;
+      renderGradesBoard();
+      updateWeightHint();
+      switchTab("grades");
+    });
+
+    metaRow.appendChild(avgEl);
+    metaRow.appendChild(goGradesBtn);
+
+    card.appendChild(top);
+    card.appendChild(metaRow);
+    grid.appendChild(card);
+  });
+}
+
+function renderGradesBoard() {
+  const grid = document.getElementById("grades-board");
+  const empty = document.getElementById("grades-empty");
+  const filterVal = document.getElementById("filter-grade-subject")?.value || "all";
+  if (!grid || !empty) return;
+
+  const list = state.subjects.filter((s) => filterVal === "all" || s.id === filterVal);
+  grid.innerHTML = "";
+  empty.classList.toggle("hidden", list.length > 0);
+
+  list.forEach((sub) => {
+    const card = document.createElement("div");
+    card.className = "subject-card";
+    card.style.borderTopColor = sub.color;
+
+    const top = document.createElement("div");
+    top.className = "subject-top";
+
+    const titleBox = document.createElement("div");
+    const nameEl = document.createElement("div");
+    nameEl.className = "subject-name";
+    nameEl.textContent = sub.name;
+    titleBox.appendChild(nameEl);
+
+    if (sub.teacher) {
+      const teacherEl = document.createElement("div");
+      teacherEl.className = "subject-teacher";
+      teacherEl.textContent = sub.teacher;
+      titleBox.appendChild(teacherEl);
+    }
+
+    const totalWeight = getSubjectWeightSum(sub);
     const weightPill = document.createElement("span");
     weightPill.className = `weight-pill ${totalWeight > 100 ? "over" : ""}`.trim();
     weightPill.textContent = `${totalWeight}% / 100%`;
 
-    metaRow.appendChild(avgEl);
-    metaRow.appendChild(weightPill);
+    top.appendChild(titleBox);
+    top.appendChild(weightPill);
+
+    const avg = getSubjectAverage(sub);
+    const avgEl = document.createElement("div");
+    avgEl.className = "subject-avg";
+    avgEl.textContent = `Promedio ponderado: ${avg !== null ? avg.toFixed(2) : "Sin notas"}`;
 
     const chips = document.createElement("div");
     chips.className = "grade-chips";
-    sub.grades.forEach((g) => {
-      const chip = document.createElement("span");
-      chip.className = "grade-chip";
-      const typePrefix = g.type ? `${g.type} · ` : "";
-      const weightSuffix = g.weight ? ` (${g.weight}%)` : "";
-      chip.textContent = `${typePrefix}${g.label}: ${Number(g.score).toFixed(1)}${weightSuffix}`;
-      const rm = document.createElement("button");
-      rm.title = "Eliminar calificación";
-      rm.textContent = "×";
-      rm.addEventListener("click", () => {
-        sub.grades = sub.grades.filter((item) => item.id !== g.id);
-        saveState();
-        renderAll();
+    if (!sub.grades.length) {
+      const noNote = document.createElement("span");
+      noNote.className = "mini-sub";
+      noNote.textContent = "Sin calificaciones aún";
+      chips.appendChild(noNote);
+    } else {
+      sub.grades.forEach((g) => {
+        const chip = document.createElement("span");
+        chip.className = "grade-chip";
+        const typePrefix = g.type ? `${g.type} · ` : "";
+        const weightSuffix = g.weight ? ` (${g.weight}%)` : "";
+        chip.textContent = `${typePrefix}${g.label}: ${Number(g.score).toFixed(1)}${weightSuffix}`;
+        const rm = document.createElement("button");
+        rm.title = "Eliminar calificación";
+        rm.textContent = "×";
+        rm.addEventListener("click", () => {
+          sub.grades = sub.grades.filter((item) => item.id !== g.id);
+          saveState();
+          renderAll();
+        });
+        chip.appendChild(rm);
+        chips.appendChild(chip);
       });
-      chip.appendChild(rm);
-      chips.appendChild(chip);
-    });
+    }
 
     card.appendChild(top);
-    card.appendChild(metaRow);
+    card.appendChild(avgEl);
     card.appendChild(chips);
     grid.appendChild(card);
   });
@@ -629,6 +703,7 @@ function renderAll() {
   renderSubjectSelects();
   renderTasks();
   renderSubjects();
+  renderGradesBoard();
   renderSchedule();
   renderStats();
   updateWeightHint();
@@ -657,6 +732,7 @@ document.getElementById("task-form").addEventListener("submit", (e) => {
 
 document.getElementById("filter-status").addEventListener("change", renderTasks);
 document.getElementById("filter-subject").addEventListener("change", renderTasks);
+document.getElementById("filter-grade-subject").addEventListener("change", renderGradesBoard);
 
 document.getElementById("subject-form").addEventListener("submit", (e) => {
   e.preventDefault();
