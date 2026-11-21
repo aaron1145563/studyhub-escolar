@@ -203,13 +203,6 @@ if (globalSearch) {
   });
 }
 
-const rightCloudBtn = document.getElementById("right-cloud-btn");
-if (rightCloudBtn) {
-  rightCloudBtn.addEventListener("click", () => {
-    document.getElementById("auth-open-btn").click();
-  });
-}
-
 // --- Cálculos de promedio ---
 function getGradesForPartial(subject, partialFilter = "all") {
   if (partialFilter === "all") return subject.grades;
@@ -915,36 +908,6 @@ document.getElementById("schedule-form").addEventListener("submit", (e) => {
   renderSchedule();
 });
 
-document.getElementById("export-data").addEventListener("click", () => {
-  const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `studyhub-respaldo-${new Date().toISOString().slice(0, 10)}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
-});
-
-document.getElementById("import-data").addEventListener("change", (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = () => {
-    try {
-      const parsed = JSON.parse(reader.result);
-      if (parsed && Array.isArray(parsed.subjects) && Array.isArray(parsed.tasks)) {
-        state = { ...structuredClone(DEFAULT_DATA), ...parsed };
-        saveState();
-        renderAll();
-      }
-    } catch {
-      alert("El archivo de respaldo no es válido.");
-    }
-  };
-  reader.readAsText(file);
-  e.target.value = "";
-});
-
 document.getElementById("reset-demo").addEventListener("click", () => {
   state = structuredClone(DEFAULT_DATA);
   saveState();
@@ -1128,28 +1091,8 @@ if (guestEnterBtn) {
 }
 
 // --- Sincronización y Auth con Supabase ---
-const authModal = document.getElementById("auth-modal");
-const authOpenBtn = document.getElementById("auth-open-btn");
-const authBtnLabel = document.getElementById("auth-btn-label");
-const authCloseBtn = document.getElementById("auth-close-btn");
-const authLoggedOut = document.getElementById("auth-logged-out");
-const authLoggedIn = document.getElementById("auth-logged-in");
-const authUserEmail = document.getElementById("auth-user-email");
-const authMessage = document.getElementById("auth-message");
-const authForm = document.getElementById("auth-form");
-const authSignupBtn = document.getElementById("auth-signup-btn");
-const authSignoutBtn = document.getElementById("auth-signout-btn");
-const syncNowBtn = document.getElementById("sync-now-btn");
-
-function showAuthMsg(text, type = "") {
-  authMessage.textContent = text;
-  authMessage.className = `auth-message ${type}`.trim();
-}
-
-function clearAuthMsg() {
-  authMessage.textContent = "";
-  authMessage.className = "auth-message hidden";
-}
+const sidebarSessionBtn = document.getElementById("sidebar-session-btn");
+const sessionBtnLabel = document.getElementById("session-btn-label");
 
 function updateAuthUI() {
   const syncPill = document.getElementById("sync-status-pill");
@@ -1160,29 +1103,21 @@ function updateAuthUI() {
       studentDisplayName ||
       currentUser.user_metadata?.full_name ||
       currentUser.email.split("@")[0];
-    authOpenBtn.classList.add("connected");
-    authBtnLabel.textContent = shortName;
+    if (sessionBtnLabel) sessionBtnLabel.textContent = "Cerrar sesión";
     if (syncPill) {
       syncPill.textContent = `☁️ ${shortName}`;
       syncPill.classList.add("connected");
     }
     if (ovCloud) ovCloud.textContent = `Nube (${currentUser.email})`;
     if (rightGreeting) rightGreeting.textContent = `¡Hola, ${shortName}! 👋`;
-    authLoggedOut.classList.add("hidden");
-    authLoggedIn.classList.remove("hidden");
-    authUserEmail.textContent = currentUser.email;
   } else {
-    authOpenBtn.classList.remove("connected");
-    authBtnLabel.textContent = "Conectar nube";
+    if (sessionBtnLabel) sessionBtnLabel.textContent = "Iniciar sesión";
     if (syncPill) {
       syncPill.textContent = "Modo local";
       syncPill.classList.remove("connected");
     }
     if (ovCloud) ovCloud.textContent = "Local (navegador)";
     if (rightGreeting) rightGreeting.textContent = "¡Hola, Estudiante! 👋";
-    authLoggedOut.classList.remove("hidden");
-    authLoggedIn.classList.add("hidden");
-    authUserEmail.textContent = "";
   }
 }
 
@@ -1194,7 +1129,8 @@ async function saveCloudWorkspace() {
     currentUser.email.split("@")[0];
   const phone = currentUser.user_metadata?.phone || "";
   const emailNotifs = currentUser.user_metadata?.email_notifications ?? true;
-  authBtnLabel.textContent = "Guardando...";
+  const syncPill = document.getElementById("sync-status-pill");
+  if (syncPill) syncPill.textContent = "Guardando...";
   const { error } = await supabaseClient.from("studyhub_workspaces").upsert(
     {
       user_id: currentUser.id,
@@ -1206,10 +1142,8 @@ async function saveCloudWorkspace() {
     },
     { onConflict: "user_id" }
   );
-  if (error) {
-    authBtnLabel.textContent = "Error nube";
-  } else {
-    authBtnLabel.textContent = `${displayName} ✓`;
+  if (syncPill) {
+    syncPill.textContent = error ? "Error nube" : `☁️ ${displayName} ✓`;
   }
 }
 
@@ -1226,10 +1160,7 @@ async function loadCloudWorkspace() {
     .eq("user_id", currentUser.id)
     .maybeSingle();
 
-  if (error) {
-    showAuthMsg(`No se pudo leer la nube: ${error.message}`, "error");
-    return;
-  }
+  if (error) return;
 
   if (data) {
     if (data.student_name) {
@@ -1250,15 +1181,18 @@ async function loadCloudWorkspace() {
   await saveCloudWorkspace();
 }
 
-authOpenBtn.addEventListener("click", () => {
-  clearAuthMsg();
-  authModal.classList.remove("hidden");
-});
-
-authCloseBtn.addEventListener("click", () => authModal.classList.add("hidden"));
-authModal.addEventListener("click", (e) => {
-  if (e.target === authModal) authModal.classList.add("hidden");
-});
+if (sidebarSessionBtn) {
+  sidebarSessionBtn.addEventListener("click", async () => {
+    if (currentUser && supabaseClient) {
+      await supabaseClient.auth.signOut();
+      currentUser = null;
+      studentDisplayName = "";
+    }
+    guestMode = false;
+    updateAuthUI();
+    showScreen(false);
+  });
+}
 
 if (supabaseClient) {
   if (loginForm) {
@@ -1357,64 +1291,6 @@ if (supabaseClient) {
       }
     });
   }
-
-  authForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    clearAuthMsg();
-    const email = document.getElementById("auth-email").value.trim();
-    const password = document.getElementById("auth-password").value;
-    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-    if (error) {
-      const msg = error.message === "Invalid login credentials"
-        ? "Correo o contraseña incorrectos. Si es tu primera vez, dale clic en «Crear cuenta»."
-        : error.message;
-      showAuthMsg(msg, "error");
-      return;
-    }
-    currentUser = data.user;
-    updateAuthUI();
-    await loadCloudWorkspace();
-    showAuthMsg("¡Sesión iniciada y datos sincronizados!", "success");
-  });
-
-  authSignupBtn.addEventListener("click", async () => {
-    clearAuthMsg();
-    const email = document.getElementById("auth-email").value.trim();
-    const password = document.getElementById("auth-password").value;
-    if (!email || password.length < 6) {
-      showAuthMsg("Ingresa un correo válido y contraseña de al menos 6 caracteres.", "error");
-      return;
-    }
-    const { data, error } = await supabaseClient.auth.signUp({ email, password });
-    if (error) {
-      showAuthMsg(error.message, "error");
-      return;
-    }
-    if (data.session) {
-      currentUser = data.user;
-      updateAuthUI();
-      await loadCloudWorkspace();
-      showAuthMsg("¡Cuenta creada y sincronizada!", "success");
-    } else {
-      showAuthMsg("Revisa tu correo para confirmar tu cuenta y luego inicia sesión.", "success");
-    }
-  });
-
-  syncNowBtn.addEventListener("click", async () => {
-    clearAuthMsg();
-    await saveCloudWorkspace();
-    showAuthMsg("Datos guardados en la nube ✓", "success");
-  });
-
-  authSignoutBtn.addEventListener("click", async () => {
-    await supabaseClient.auth.signOut();
-    currentUser = null;
-    studentDisplayName = "";
-    guestMode = false;
-    authModal.classList.add("hidden");
-    updateAuthUI();
-    showScreen(false);
-  });
 
   supabaseClient.auth.onAuthStateChange(async (_event, session) => {
     currentUser = session?.user || null;

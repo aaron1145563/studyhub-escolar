@@ -141,21 +141,12 @@
           <span>⏱️ Modo Enfoque</span>
           <span class="chev">›</span>
         </button>
-        <button class="nav-item" id="auth-open-btn" type="button">
-          <span>☁️ <span id="auth-btn-label">Conectar nube</span></span>
-          <span class="chev">›</span>
-        </button>
-        <button class="nav-item" id="export-data" type="button">
-          <span>💾 Exportar respaldo</span>
-          <span class="chev">›</span>
-        </button>
-        <label class="nav-item file-nav-item">
-          <span>📂 Importar respaldo</span>
-          <span class="chev">›</span>
-          <input type="file" id="import-data" accept=".json" hidden />
-        </label>
         <button class="nav-item" id="reset-demo" type="button">
           <span>🔄 Restaurar ejemplo</span>
+          <span class="chev">›</span>
+        </button>
+        <button class="nav-item" id="sidebar-session-btn" type="button">
+          <span>🚪 <span id="session-btn-label">Cerrar sesión</span></span>
           <span class="chev">›</span>
         </button>
       </nav>
@@ -528,10 +519,6 @@
 
       <div class="quick-kv">
         <div class="kv-row">
-          <span>Enlace rápido</span>
-          <button class="text-link" type="button" id="right-cloud-btn">Nube</button>
-        </div>
-        <div class="kv-row">
           <span>Materias</span>
           <strong id="usage-subjects">0</strong>
         </div>
@@ -574,48 +561,6 @@
         <div id="upcoming-notices" class="notices-list"></div>
       </div>
     </aside>
-  </div>
-
-  <!-- MODAL DE CUENTA / NUBE -->
-  <div id="auth-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="auth-modal-title">
-    <div class="modal-card">
-      <div class="card-top" style="margin-bottom:10px;">
-        <h3 id="auth-modal-title">Sincronizar con Supabase</h3>
-        <button id="auth-close-btn" class="icon-btn" type="button" aria-label="Cerrar">✕</button>
-      </div>
-
-      <div id="auth-logged-out">
-        <p class="muted" style="margin-bottom: 14px;">
-          Guarda tus materias, tareas, horario y calificaciones en la nube.
-        </p>
-        <form id="auth-form" class="form-stack">
-          <label>
-            Correo electrónico
-            <input type="email" id="auth-email" placeholder="tu@correo.com" required />
-          </label>
-          <label>
-            Contraseña (mín. 6 caracteres)
-            <input type="password" id="auth-password" placeholder="••••••" minlength="6" required />
-          </label>
-          <div class="form-row">
-            <button type="submit" id="auth-signin-btn" class="btn btn-sky">Iniciar sesión</button>
-            <button type="button" id="auth-signup-btn" class="btn btn-secondary">Crear cuenta</button>
-          </div>
-        </form>
-      </div>
-
-      <div id="auth-logged-in" class="hidden">
-        <p class="muted" style="margin-bottom: 14px;">
-          Conectado como <strong id="auth-user-email"></strong>
-        </p>
-        <div class="form-row">
-          <button type="button" id="sync-now-btn" class="btn btn-sky">Sincronizar ahora</button>
-          <button type="button" id="auth-signout-btn" class="btn btn-secondary">Cerrar sesión</button>
-        </div>
-      </div>
-
-      <p id="auth-message" class="auth-message hidden"></p>
-    </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
