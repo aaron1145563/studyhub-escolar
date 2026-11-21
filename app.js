@@ -134,15 +134,32 @@ themeBtn.addEventListener("click", () => {
   applyTheme();
 });
 
-// --- Tabs ---
-document.querySelectorAll(".tab-btn").forEach((btn) => {
-  btn.addEventListener("click", () => {
-    document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
-    document.querySelectorAll(".tab-panel").forEach((p) => p.classList.remove("active"));
-    btn.classList.add("active");
-    document.getElementById(`tab-${btn.dataset.tab}`).classList.add("active");
+// --- Navegación lateral (Sidebar) ---
+const sidebar = document.getElementById("sidebar");
+const sidebarToggle = document.getElementById("sidebar-toggle");
+if (sidebarToggle && sidebar) {
+  sidebarToggle.addEventListener("click", () => {
+    sidebar.classList.toggle("collapsed");
   });
+}
+
+function switchTab(tabName) {
+  document.querySelectorAll(".nav-item[data-tab]").forEach((b) => {
+    b.classList.toggle("active", b.dataset.tab === tabName);
+  });
+  document.querySelectorAll(".tab-panel").forEach((p) => {
+    p.classList.toggle("active", p.id === `tab-${tabName}`);
+  });
+}
+
+document.querySelectorAll(".nav-item[data-tab]").forEach((btn) => {
+  btn.addEventListener("click", () => switchTab(btn.dataset.tab));
 });
+
+const dashGoTasks = document.getElementById("dash-go-tasks");
+if (dashGoTasks) {
+  dashGoTasks.addEventListener("click", () => switchTab("tasks"));
+}
 
 // --- Cálculos de promedio ---
 function getSubjectWeightSum(subject) {
@@ -379,8 +396,20 @@ function renderSubjects() {
   });
 }
 
+function setGauge(elId, pct) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  const r = 46;
+  const circ = 2 * Math.PI * r;
+  const clamped = Math.max(0, Math.min(100, pct));
+  el.style.strokeDasharray = `${circ}`;
+  el.style.strokeDashoffset = `${circ * (1 - clamped / 100)}`;
+}
+
 function renderStats() {
-  const pending = state.tasks.filter((t) => !t.done).length;
+  const totalTasks = state.tasks.length;
+  const doneTasks = state.tasks.filter((t) => t.done).length;
+  const pending = totalTasks - doneTasks;
   document.getElementById("stat-pending").textContent = pending;
 
   const overall = getOverallAverage();
@@ -390,6 +419,56 @@ function renderStats() {
   document.getElementById("pomodoro-count").textContent = state.pomodoroCount;
   const statPomodoros = document.getElementById("stat-pomodoros");
   if (statPomodoros) statPomodoros.textContent = state.pomodoroCount;
+
+  // Dashboard gauges
+  const taskPct = totalTasks ? Math.round((doneTasks / totalTasks) * 100) : 100;
+  setGauge("gauge-tasks", taskPct);
+  const gTasksVal = document.getElementById("gauge-tasks-val");
+  const gTasksSub = document.getElementById("gauge-tasks-sub");
+  if (gTasksVal) gTasksVal.textContent = `${taskPct}%`;
+  if (gTasksSub) gTasksSub.textContent = `${doneTasks} / ${totalTasks} listas`;
+
+  const avgPct = overall !== null ? (overall / 10) * 100 : 0;
+  setGauge("gauge-avg", avgPct);
+  const gAvgVal = document.getElementById("gauge-avg-val");
+  if (gAvgVal) gAvgVal.textContent = formatted;
+
+  const focusPct = Math.min(100, (state.pomodoroCount / 4) * 100);
+  setGauge("gauge-focus", focusPct);
+  const gFocusVal = document.getElementById("gauge-focus-val");
+  if (gFocusVal) gFocusVal.textContent = state.pomodoroCount;
+
+  const subPct = Math.min(100, (state.subjects.length / 8) * 100);
+  setGauge("gauge-subjects", subPct);
+  const gSubVal = document.getElementById("gauge-subjects-val");
+  if (gSubVal) gSubVal.textContent = state.subjects.length;
+
+  // Overview & Usage stats
+  const ovPending = document.getElementById("ov-pending");
+  if (ovPending) ovPending.textContent = `${pending} pendientes`;
+
+  const nextTask = state.tasks
+    .filter((t) => !t.done && t.dueDate)
+    .sort((a, b) => a.dueDate.localeCompare(b.dueDate))[0];
+  const ovNext = document.getElementById("ov-next-task");
+  if (ovNext) ovNext.textContent = nextTask ? `${nextTask.title} (${nextTask.dueDate})` : "Sin fechas próximas";
+
+  const bestSub = state.subjects
+    .map((s) => ({ name: s.name, avg: getSubjectAverage(s) }))
+    .filter((s) => s.avg !== null)
+    .sort((a, b) => b.avg - a.avg)[0];
+  const ovBest = document.getElementById("ov-best-subject");
+  if (ovBest) ovBest.textContent = bestSub ? `${bestSub.name} (${bestSub.avg.toFixed(2)})` : "—";
+
+  const ovClasses = document.getElementById("ov-classes");
+  if (ovClasses) ovClasses.textContent = `${state.schedule.length} clases`;
+
+  const usageDone = document.getElementById("usage-done");
+  const usageSubs = document.getElementById("usage-subjects");
+  const usageClasses = document.getElementById("usage-classes");
+  if (usageDone) usageDone.textContent = doneTasks;
+  if (usageSubs) usageSubs.textContent = state.subjects.length;
+  if (usageClasses) usageClasses.textContent = state.schedule.length;
 }
 
 const DAYS_ORDER = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
@@ -741,15 +820,27 @@ function clearAuthMsg() {
 }
 
 function updateAuthUI() {
+  const syncPill = document.getElementById("sync-status-pill");
+  const ovCloud = document.getElementById("ov-cloud");
   if (currentUser) {
     authOpenBtn.classList.add("connected");
     authBtnLabel.textContent = currentUser.email.split("@")[0];
+    if (syncPill) {
+      syncPill.textContent = `☁️ ${currentUser.email}`;
+      syncPill.classList.add("connected");
+    }
+    if (ovCloud) ovCloud.textContent = `Nube (${currentUser.email})`;
     authLoggedOut.classList.add("hidden");
     authLoggedIn.classList.remove("hidden");
     authUserEmail.textContent = currentUser.email;
   } else {
     authOpenBtn.classList.remove("connected");
     authBtnLabel.textContent = "Conectar nube";
+    if (syncPill) {
+      syncPill.textContent = "Modo local";
+      syncPill.classList.remove("connected");
+    }
+    if (ovCloud) ovCloud.textContent = "Local (navegador)";
     authLoggedOut.classList.remove("hidden");
     authLoggedIn.classList.add("hidden");
     authUserEmail.textContent = "";
