@@ -7,6 +7,8 @@ const supabaseClient = window.supabase
 
 let currentUser = null;
 let cloudSyncTimer = null;
+let guestMode = false;
+let studentDisplayName = "";
 
 const DEFAULT_DATA = {
   theme: "light",
@@ -863,6 +865,60 @@ resetBtn.addEventListener("click", () => {
 renderAll();
 updateTimerUI();
 
+// --- Pantalla de Login vs App Shell ---
+const loginScreen = document.getElementById("login-screen");
+const appShell = document.getElementById("app-shell");
+const loginTabSignin = document.getElementById("login-tab-signin");
+const loginTabSignup = document.getElementById("login-tab-signup");
+const loginNameWrap = document.getElementById("login-name-wrap");
+const loginNameInput = document.getElementById("login-name");
+const loginForm = document.getElementById("login-form");
+const loginSubmitBtn = document.getElementById("login-submit-btn");
+const loginMessage = document.getElementById("login-message");
+const guestEnterBtn = document.getElementById("guest-enter-btn");
+
+let loginMode = "signin";
+
+function showScreen(showApp) {
+  if (loginScreen) loginScreen.classList.toggle("hidden", showApp);
+  if (appShell) appShell.classList.toggle("hidden", !showApp);
+}
+
+function showLoginMsg(text, type = "") {
+  if (!loginMessage) return;
+  loginMessage.textContent = text;
+  loginMessage.className = `auth-message ${type}`.trim();
+}
+
+function clearLoginMsg() {
+  if (!loginMessage) return;
+  loginMessage.textContent = "";
+  loginMessage.className = "auth-message hidden";
+}
+
+function setLoginMode(mode) {
+  loginMode = mode;
+  clearLoginMsg();
+  const isSignup = mode === "signup";
+  loginTabSignin.classList.toggle("active", !isSignup);
+  loginTabSignup.classList.toggle("active", isSignup);
+  loginNameWrap.classList.toggle("hidden", !isSignup);
+  loginNameInput.required = isSignup;
+  loginSubmitBtn.textContent = isSignup ? "Crear cuenta de estudiante" : "Entrar a mi panel";
+}
+
+if (loginTabSignin && loginTabSignup) {
+  loginTabSignin.addEventListener("click", () => setLoginMode("signin"));
+  loginTabSignup.addEventListener("click", () => setLoginMode("signup"));
+}
+
+if (guestEnterBtn) {
+  guestEnterBtn.addEventListener("click", () => {
+    guestMode = true;
+    showScreen(true);
+  });
+}
+
 // --- Sincronización y Auth con Supabase ---
 const authModal = document.getElementById("auth-modal");
 const authOpenBtn = document.getElementById("auth-open-btn");
@@ -892,7 +948,10 @@ function updateAuthUI() {
   const ovCloud = document.getElementById("ov-cloud");
   const rightGreeting = document.getElementById("right-greeting");
   if (currentUser) {
-    const shortName = currentUser.email.split("@")[0];
+    const shortName =
+      studentDisplayName ||
+      currentUser.user_metadata?.full_name ||
+      currentUser.email.split("@")[0];
     authOpenBtn.classList.add("connected");
     authBtnLabel.textContent = shortName;
     if (syncPill) {
@@ -921,10 +980,15 @@ function updateAuthUI() {
 
 async function saveCloudWorkspace() {
   if (!currentUser || !supabaseClient) return;
+  const displayName =
+    studentDisplayName ||
+    currentUser.user_metadata?.full_name ||
+    currentUser.email.split("@")[0];
   authBtnLabel.textContent = "Guardando...";
   const { error } = await supabaseClient.from("studyhub_workspaces").upsert(
     {
       user_id: currentUser.id,
+      student_name: displayName,
       data: state,
       updated_at: new Date().toISOString(),
     },
@@ -933,7 +997,7 @@ async function saveCloudWorkspace() {
   if (error) {
     authBtnLabel.textContent = "Error nube";
   } else {
-    authBtnLabel.textContent = `${currentUser.email.split("@")[0]} ✓`;
+    authBtnLabel.textContent = `${displayName} ✓`;
   }
 }
 
@@ -946,7 +1010,7 @@ async function loadCloudWorkspace() {
   if (!currentUser || !supabaseClient) return;
   const { data, error } = await supabaseClient
     .from("studyhub_workspaces")
-    .select("data")
+    .select("student_name, data")
     .eq("user_id", currentUser.id)
     .maybeSingle();
 
@@ -955,17 +1019,23 @@ async function loadCloudWorkspace() {
     return;
   }
 
-  if (data && data.data && Array.isArray(data.data.subjects)) {
-    state = {
-      ...structuredClone(DEFAULT_DATA),
-      ...data.data,
-      schedule: Array.isArray(data.data.schedule) ? data.data.schedule : [],
-    };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    renderAll();
-  } else {
-    await saveCloudWorkspace();
+  if (data) {
+    if (data.student_name) {
+      studentDisplayName = data.student_name;
+      updateAuthUI();
+    }
+    if (data.data && Array.isArray(data.data.subjects)) {
+      state = {
+        ...structuredClone(DEFAULT_DATA),
+        ...data.data,
+        schedule: Array.isArray(data.data.schedule) ? data.data.schedule : [],
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      renderAll();
+      return;
+    }
   }
+  await saveCloudWorkspace();
 }
 
 authOpenBtn.addEventListener("click", () => {
@@ -979,6 +1049,58 @@ authModal.addEventListener("click", (e) => {
 });
 
 if (supabaseClient) {
+  if (loginForm) {
+    loginForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      clearLoginMsg();
+      const email = document.getElementById("login-email").value.trim();
+      const password = document.getElementById("login-password").value;
+      const fullName = loginNameInput ? loginNameInput.value.trim() : "";
+
+      if (loginMode === "signup") {
+        const { data, error } = await supabaseClient.auth.signUp({
+          email,
+          password,
+          options: {
+            data: { full_name: fullName },
+            emailRedirectTo: window.location.origin + window.location.pathname,
+          },
+        });
+        if (error) {
+          showLoginMsg(error.message, "error");
+          return;
+        }
+        if (data.session) {
+          studentDisplayName = fullName;
+          currentUser = data.user;
+          updateAuthUI();
+          showScreen(true);
+          await loadCloudWorkspace();
+        } else {
+          showLoginMsg(
+            "¡Cuenta creada! Revisa tu correo para confirmar tu cuenta y luego inicia sesión.",
+            "success"
+          );
+        }
+        return;
+      }
+
+      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      if (error) {
+        const msg =
+          error.message === "Invalid login credentials"
+            ? "Correo o contraseña incorrectos. Si es tu primera vez, usa «Crear cuenta»."
+            : error.message;
+        showLoginMsg(msg, "error");
+        return;
+      }
+      currentUser = data.user;
+      updateAuthUI();
+      showScreen(true);
+      await loadCloudWorkspace();
+    });
+  }
+
   authForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     clearAuthMsg();
@@ -1030,15 +1152,34 @@ if (supabaseClient) {
   authSignoutBtn.addEventListener("click", async () => {
     await supabaseClient.auth.signOut();
     currentUser = null;
+    studentDisplayName = "";
+    guestMode = false;
+    authModal.classList.add("hidden");
     updateAuthUI();
-    showAuthMsg("Sesión cerrada.", "");
+    showScreen(false);
+  });
+
+  supabaseClient.auth.onAuthStateChange(async (_event, session) => {
+    currentUser = session?.user || null;
+    updateAuthUI();
+    if (currentUser) {
+      showScreen(true);
+      await loadCloudWorkspace();
+    } else if (!guestMode) {
+      showScreen(false);
+    }
   });
 
   supabaseClient.auth.getSession().then(async ({ data }) => {
     currentUser = data.session?.user || null;
     updateAuthUI();
     if (currentUser) {
+      showScreen(true);
       await loadCloudWorkspace();
+    } else {
+      showScreen(false);
     }
   });
+} else {
+  showScreen(true);
 }
