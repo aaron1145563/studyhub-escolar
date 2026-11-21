@@ -351,14 +351,40 @@
 
       <!-- TAB: CALIFICACIONES -->
       <section id="tab-grades" class="tab-panel">
+        <div class="white-card partials-bar-card">
+          <div class="partials-bar-left">
+            <div>
+              <h3 class="section-title" style="margin:0;">Parciales del semestre</h3>
+              <p class="muted" style="margin:2px 0 0;">Elige cuántos parciales tiene tu escuela y consulta cada uno</p>
+            </div>
+            <label class="partials-count-label">
+              Cantidad de parciales
+              <select id="partials-count-select">
+                <option value="2">2 parciales</option>
+                <option value="3" selected>3 parciales</option>
+                <option value="4">4 parciales</option>
+                <option value="5">5 parciales</option>
+                <option value="6">6 parciales</option>
+              </select>
+            </label>
+          </div>
+          <div id="partials-pills" class="partials-pills"></div>
+        </div>
+
         <div class="grid-two">
           <div class="white-card">
             <h3 class="section-title">Subir calificación</h3>
             <form id="grade-form" class="form-stack">
-              <label>
-                Materia
-                <select id="grade-subject" required></select>
-              </label>
+              <div class="form-row">
+                <label>
+                  Materia
+                  <select id="grade-subject" required></select>
+                </label>
+                <label>
+                  Parcial
+                  <select id="grade-partial" required></select>
+                </label>
+              </div>
               <div class="form-row">
                 <label>
                   Rubro

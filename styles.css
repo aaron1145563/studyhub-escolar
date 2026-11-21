@@ -1015,6 +1015,72 @@ input[type="color"] {
   color: var(--danger);
 }
 
+.partials-bar-card {
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.partials-bar-left {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.partials-count-label {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.partials-count-label select {
+  width: auto;
+  padding: 6px 10px;
+  font-size: 0.84rem;
+}
+
+.partials-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.partial-pill {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 6px 13px;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.partial-pill:hover {
+  border-color: var(--primary);
+}
+
+.partial-pill.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #ffffff;
+}
+
+.partial-pill-avg {
+  font-weight: 700;
+  opacity: 0.9;
+}
+
 .weight-hint {
   margin: 0;
   font-size: 0.76rem;

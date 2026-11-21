@@ -13,6 +13,7 @@ let studentDisplayName = "";
 const DEFAULT_DATA = {
   theme: "light",
   pomodoroCount: 0,
+  partialsCount: 3,
   subjects: [
     {
       id: "sub-math",
@@ -20,9 +21,9 @@ const DEFAULT_DATA = {
       teacher: "Prof. Ramírez",
       color: "#6366f1",
       grades: [
-        { id: "g1", type: "Examen", label: "Parcial 1", score: 9.2, weight: 50 },
-        { id: "g2", type: "Actividades", label: "Ejercicios", score: 9.8, weight: 30 },
-        { id: "g2b", type: "Proyecto", label: "Modelado", score: 9.5, weight: 20 },
+        { id: "g1", partial: 1, type: "Examen", label: "Parcial 1", score: 9.2, weight: 50 },
+        { id: "g2", partial: 1, type: "Actividades", label: "Ejercicios", score: 9.8, weight: 30 },
+        { id: "g2b", partial: 1, type: "Proyecto", label: "Modelado", score: 9.5, weight: 20 },
       ],
     },
     {
@@ -31,8 +32,8 @@ const DEFAULT_DATA = {
       teacher: "Profa. López",
       color: "#f59e0b",
       grades: [
-        { id: "g3", type: "Proyecto", label: "Ensayo", score: 8.7, weight: 40 },
-        { id: "g3b", type: "Examen", label: "Parcial 1", score: 9.0, weight: 60 },
+        { id: "g3", partial: 1, type: "Proyecto", label: "Ensayo", score: 8.7, weight: 40 },
+        { id: "g3b", partial: 1, type: "Examen", label: "Parcial 1", score: 9.0, weight: 60 },
       ],
     },
     {
@@ -40,7 +41,7 @@ const DEFAULT_DATA = {
       name: "Biología",
       teacher: "Prof. Mendoza",
       color: "#10b981",
-      grades: [{ id: "g4", type: "Laboratorio", label: "Práctica 1", score: 9.5, weight: 30 }],
+      grades: [{ id: "g4", partial: 1, type: "Laboratorio", label: "Práctica 1", score: 9.5, weight: 30 }],
     },
   ],
   tasks: [
@@ -86,6 +87,7 @@ function loadState() {
 }
 
 let state = loadState();
+let selectedPartialFilter = "all";
 
 function saveState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -209,28 +211,55 @@ if (rightCloudBtn) {
 }
 
 // --- Cálculos de promedio ---
-function getSubjectWeightSum(subject) {
-  return subject.grades.reduce((acc, g) => acc + (Number(g.weight) || 0), 0);
+function getGradesForPartial(subject, partialFilter = "all") {
+  if (partialFilter === "all") return subject.grades;
+  const target = Number(partialFilter);
+  return subject.grades.filter((g) => (Number(g.partial) || 1) === target);
 }
 
-function getSubjectAverage(subject) {
-  if (!subject.grades.length) return null;
-  const totalWeight = getSubjectWeightSum(subject);
+function getSubjectWeightSum(subject, partialFilter = "all") {
+  return getGradesForPartial(subject, partialFilter).reduce(
+    (acc, g) => acc + (Number(g.weight) || 0),
+    0
+  );
+}
+
+function getSubjectAverage(subject, partialFilter = "all") {
+  const grades = getGradesForPartial(subject, partialFilter);
+  if (!grades.length) return null;
+  if (partialFilter === "all") {
+    const count = Number(state.partialsCount) || 3;
+    const partialAvgs = [];
+    for (let p = 1; p <= count; p += 1) {
+      const pAvg = getSubjectAverage(subject, p);
+      if (pAvg !== null) partialAvgs.push(pAvg);
+    }
+    if (partialAvgs.length) {
+      return partialAvgs.reduce((a, b) => a + b, 0) / partialAvgs.length;
+    }
+  }
+  const totalWeight = grades.reduce((acc, g) => acc + (Number(g.weight) || 0), 0);
   if (totalWeight > 0) {
-    const weightedSum = subject.grades.reduce(
+    const weightedSum = grades.reduce(
       (acc, g) => acc + Number(g.score) * (Number(g.weight) || 0),
       0
     );
     return weightedSum / totalWeight;
   }
-  const sum = subject.grades.reduce((acc, g) => acc + Number(g.score), 0);
-  return sum / subject.grades.length;
+  const sum = grades.reduce((acc, g) => acc + Number(g.score), 0);
+  return sum / grades.length;
+}
+
+function getPartialOverallAverage(partialFilter = "all") {
+  const avgs = state.subjects
+    .map((s) => getSubjectAverage(s, partialFilter))
+    .filter((v) => v !== null);
+  if (!avgs.length) return null;
+  return avgs.reduce((a, b) => a + b, 0) / avgs.length;
 }
 
 function getOverallAverage() {
-  const avgs = state.subjects.map(getSubjectAverage).filter((v) => v !== null);
-  if (!avgs.length) return null;
-  return avgs.reduce((a, b) => a + b, 0) / avgs.length;
+  return getPartialOverallAverage("all");
 }
 
 // --- Renderizado ---
@@ -438,6 +467,62 @@ function renderSubjects() {
   });
 }
 
+function renderPartialControls() {
+  const countSelect = document.getElementById("partials-count-select");
+  const partialSelect = document.getElementById("grade-partial");
+  const pillsWrap = document.getElementById("partials-pills");
+  const count = Number(state.partialsCount) || 3;
+
+  if (countSelect) countSelect.value = String(count);
+
+  if (partialSelect) {
+    const prev = Number(partialSelect.value) || 1;
+    partialSelect.innerHTML = "";
+    for (let i = 1; i <= count; i += 1) {
+      const opt = document.createElement("option");
+      opt.value = String(i);
+      opt.textContent = `Parcial ${i}`;
+      partialSelect.appendChild(opt);
+    }
+    partialSelect.value = prev <= count ? String(prev) : "1";
+  }
+
+  if (selectedPartialFilter !== "all" && Number(selectedPartialFilter) > count) {
+    selectedPartialFilter = "all";
+  }
+
+  if (pillsWrap) {
+    pillsWrap.innerHTML = "";
+    const allAvg = getPartialOverallAverage("all");
+    const allBtn = document.createElement("button");
+    allBtn.type = "button";
+    allBtn.className = `partial-pill ${selectedPartialFilter === "all" ? "active" : ""}`.trim();
+    allBtn.innerHTML = `Todos (${count} parciales) <span class="partial-pill-avg">${allAvg !== null ? allAvg.toFixed(2) : "—"}</span>`;
+    allBtn.addEventListener("click", () => {
+      selectedPartialFilter = "all";
+      renderPartialControls();
+      renderGradesBoard();
+    });
+    pillsWrap.appendChild(allBtn);
+
+    for (let i = 1; i <= count; i += 1) {
+      const pAvg = getPartialOverallAverage(i);
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = `partial-pill ${Number(selectedPartialFilter) === i ? "active" : ""}`.trim();
+      btn.innerHTML = `Parcial ${i} <span class="partial-pill-avg">${pAvg !== null ? pAvg.toFixed(2) : "—"}</span>`;
+      btn.addEventListener("click", () => {
+        selectedPartialFilter = i;
+        if (partialSelect) partialSelect.value = String(i);
+        renderPartialControls();
+        renderGradesBoard();
+        updateWeightHint();
+      });
+      pillsWrap.appendChild(btn);
+    }
+  }
+}
+
 function renderGradesBoard() {
   const grid = document.getElementById("grades-board");
   const empty = document.getElementById("grades-empty");
@@ -469,33 +554,41 @@ function renderGradesBoard() {
       titleBox.appendChild(teacherEl);
     }
 
-    const totalWeight = getSubjectWeightSum(sub);
+    const activeGrades = getGradesForPartial(sub, selectedPartialFilter);
+    const totalWeight = getSubjectWeightSum(sub, selectedPartialFilter);
     const weightPill = document.createElement("span");
-    weightPill.className = `weight-pill ${totalWeight > 100 ? "over" : ""}`.trim();
-    weightPill.textContent = `${totalWeight}% / 100%`;
+    if (selectedPartialFilter === "all") {
+      weightPill.className = "weight-pill";
+      weightPill.textContent = `${activeGrades.length} notas`;
+    } else {
+      weightPill.className = `weight-pill ${totalWeight > 100 ? "over" : ""}`.trim();
+      weightPill.textContent = `P${selectedPartialFilter}: ${totalWeight}% / 100%`;
+    }
 
     top.appendChild(titleBox);
     top.appendChild(weightPill);
 
-    const avg = getSubjectAverage(sub);
+    const avg = getSubjectAverage(sub, selectedPartialFilter);
     const avgEl = document.createElement("div");
     avgEl.className = "subject-avg";
-    avgEl.textContent = `Promedio ponderado: ${avg !== null ? avg.toFixed(2) : "Sin notas"}`;
+    const avgLabel = selectedPartialFilter === "all" ? "Promedio final" : `Promedio Parcial ${selectedPartialFilter}`;
+    avgEl.textContent = `${avgLabel}: ${avg !== null ? avg.toFixed(2) : "Sin notas"}`;
 
     const chips = document.createElement("div");
     chips.className = "grade-chips";
-    if (!sub.grades.length) {
+    if (!activeGrades.length) {
       const noNote = document.createElement("span");
       noNote.className = "mini-sub";
-      noNote.textContent = "Sin calificaciones aún";
+      noNote.textContent = selectedPartialFilter === "all" ? "Sin calificaciones aún" : `Sin notas en Parcial ${selectedPartialFilter}`;
       chips.appendChild(noNote);
     } else {
-      sub.grades.forEach((g) => {
+      activeGrades.forEach((g) => {
         const chip = document.createElement("span");
         chip.className = "grade-chip";
+        const pPrefix = selectedPartialFilter === "all" ? `P${Number(g.partial) || 1} · ` : "";
         const typePrefix = g.type ? `${g.type} · ` : "";
         const weightSuffix = g.weight ? ` (${g.weight}%)` : "";
-        chip.textContent = `${typePrefix}${g.label}: ${Number(g.score).toFixed(1)}${weightSuffix}`;
+        chip.textContent = `${pPrefix}${typePrefix}${g.label}: ${Number(g.score).toFixed(1)}${weightSuffix}`;
         const rm = document.createElement("button");
         rm.title = "Eliminar calificación";
         rm.textContent = "×";
@@ -686,6 +779,7 @@ function renderSchedule() {
 function updateWeightHint() {
   const hint = document.getElementById("weight-hint");
   const subId = document.getElementById("grade-subject").value;
+  const partialNum = Number(document.getElementById("grade-partial")?.value) || 1;
   const subject = state.subjects.find((s) => s.id === subId);
   if (!hint) return;
   if (!subject) {
@@ -693,14 +787,15 @@ function updateWeightHint() {
     hint.classList.remove("over");
     return;
   }
-  const sum = getSubjectWeightSum(subject);
-  hint.textContent = `Porcentaje asignado en ${subject.name}: ${sum}%` + (sum > 100 ? " (pasa de 100%)" : "");
+  const sum = getSubjectWeightSum(subject, partialNum);
+  hint.textContent = `Porcentaje en ${subject.name} (Parcial ${partialNum}): ${sum}%` + (sum > 100 ? " (pasa de 100%)" : "");
   hint.classList.toggle("over", sum > 100);
 }
 
 function renderAll() {
   applyTheme();
   renderSubjectSelects();
+  renderPartialControls();
   renderTasks();
   renderSubjects();
   renderGradesBoard();
@@ -764,6 +859,17 @@ gradeTypeSelect.addEventListener("change", () => {
 });
 
 document.getElementById("grade-subject").addEventListener("change", updateWeightHint);
+const gradePartialSelect = document.getElementById("grade-partial");
+if (gradePartialSelect) gradePartialSelect.addEventListener("change", updateWeightHint);
+
+const partialsCountSelect = document.getElementById("partials-count-select");
+if (partialsCountSelect) {
+  partialsCountSelect.addEventListener("change", () => {
+    state.partialsCount = Number(partialsCountSelect.value) || 3;
+    saveState();
+    renderAll();
+  });
+}
 
 document.getElementById("grade-form").addEventListener("submit", (e) => {
   e.preventDefault();
@@ -771,6 +877,7 @@ document.getElementById("grade-form").addEventListener("submit", (e) => {
   const subject = state.subjects.find((s) => s.id === subId);
   if (!subject) return;
 
+  const partial = Number(gradePartialSelect?.value) || 1;
   const selectedType = gradeTypeSelect.value;
   const type = selectedType === "Otro" ? customTypeInput.value.trim() || "Otro" : selectedType;
   const label = document.getElementById("grade-label").value.trim();
@@ -778,8 +885,9 @@ document.getElementById("grade-form").addEventListener("submit", (e) => {
   const weight = parseFloat(document.getElementById("grade-weight").value);
   if (!label || Number.isNaN(score) || Number.isNaN(weight)) return;
 
-  subject.grades.push({ id: uid("g"), type, label, score, weight });
+  subject.grades.push({ id: uid("g"), partial, type, label, score, weight });
   e.target.reset();
+  if (gradePartialSelect) gradePartialSelect.value = String(partial);
   customTypeWrap.classList.add("hidden");
   customTypeInput.required = false;
   saveState();
