@@ -71,15 +71,34 @@ body {
   margin-bottom: 18px;
 }
 
-.login-logo-sm {
+.login-logo-sm,
+.login-logo-img {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 10px;
+  border-radius: 12px;
+  display: block;
+}
+
+.rail-logo {
   width: 38px;
   height: 38px;
-  margin: 0 auto 8px;
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.14);
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  margin-bottom: 24px;
   display: grid;
   place-items: center;
-  font-size: 18px;
+}
+
+.rail-logo-img {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: block;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.16);
 }
 
 .purple-auth-header h1 {
@@ -289,19 +308,6 @@ body {
   align-items: center;
   padding: 14px 0;
   flex-shrink: 0;
-}
-
-.rail-logo {
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.22);
-  border: none;
-  color: #fff;
-  font-size: 18px;
-  font-weight: 800;
-  cursor: pointer;
-  margin-bottom: 24px;
 }
 
 .rail-icons,
