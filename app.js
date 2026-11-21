@@ -1094,6 +1094,7 @@ const loginForm = document.getElementById("login-form");
 const loginSubmitBtn = document.getElementById("login-submit-btn");
 const loginMessage = document.getElementById("login-message");
 const resendEmailBtn = document.getElementById("resend-email-btn");
+const forgotPasswordBtn = document.getElementById("forgot-password-btn");
 const guestEnterBtn = document.getElementById("guest-enter-btn");
 
 let loginMode = "signup";
@@ -1135,6 +1136,7 @@ function setLoginMode(mode) {
   if (loginNewsletterWrap) loginNewsletterWrap.classList.toggle("hidden", !isSignup);
   loginNameInput.required = isSignup;
   loginConfirmInput.required = isSignup;
+  if (forgotPasswordBtn) forgotPasswordBtn.classList.toggle("hidden", isSignup);
   loginSubmitBtn.textContent = isSignup ? "REGISTRARME" : "ENTRAR A MI PANEL";
 }
 
@@ -1292,6 +1294,14 @@ if (supabaseClient) {
           showLoginMsg(error.message, "error");
           return;
         }
+        if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+          showLoginMsg(
+            "Ese correo ya está registrado. Cambia a «Iniciar sesión» (o usa recuperación de contraseña si no la recuerdas).",
+            "error"
+          );
+          if (forgotPasswordBtn) forgotPasswordBtn.classList.remove("hidden");
+          return;
+        }
         if (data.session) {
           studentDisplayName = fullName;
           currentUser = data.user;
@@ -1348,7 +1358,41 @@ if (supabaseClient) {
     });
   }
 
-  supabaseClient.auth.onAuthStateChange(async (_event, session) => {
+  if (forgotPasswordBtn) {
+    forgotPasswordBtn.addEventListener("click", async () => {
+      const targetEmail = loginEmailInput.value.trim();
+      if (!targetEmail) {
+        showLoginMsg("Escribe tu correo electrónico arriba primero.", "error");
+        return;
+      }
+      forgotPasswordBtn.disabled = true;
+      const { error } = await supabaseClient.auth.resetPasswordForEmail(targetEmail, {
+        redirectTo: window.location.origin + window.location.pathname,
+      });
+      forgotPasswordBtn.disabled = false;
+      if (error) {
+        showLoginMsg(error.message, "error");
+      } else {
+        showLoginMsg(
+          `📩 Te enviamos un correo a ${targetEmail} para restablecer tu contraseña.`,
+          "success"
+        );
+      }
+    });
+  }
+
+  supabaseClient.auth.onAuthStateChange(async (event, session) => {
+    if (event === "PASSWORD_RECOVERY" && session?.user) {
+      const newPass = window.prompt("Ingresa tu nueva contraseña (mínimo 6 caracteres):");
+      if (newPass && newPass.length >= 6) {
+        const { error } = await supabaseClient.auth.updateUser({ password: newPass });
+        if (error) {
+          alert(`No se pudo actualizar la contraseña: ${error.message}`);
+        } else {
+          alert("¡Contraseña actualizada! Ya iniciaste sesión.");
+        }
+      }
+    }
     currentUser = session?.user || null;
     updateAuthUI();
     if (currentUser) {
