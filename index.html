@@ -10,436 +10,457 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <div class="layout">
-    <!-- SIDEBAR OSCURA -->
-    <aside class="sidebar" id="sidebar">
-      <div class="sidebar-brand">
-        <div class="brand-diamond" aria-hidden="true">◆</div>
-        <div class="brand-text">
-          <span class="brand-name">STUDYHUB</span>
-          <span class="brand-sub">PANEL ESCOLAR</span>
-        </div>
+  <div class="da-shell">
+    <!-- 1. RAIL AZUL IZQUIERDO -->
+    <aside class="blue-rail" aria-label="Accesos rápidos">
+      <button class="rail-logo" data-tab="dashboard" type="button" title="StudyHub">
+        ✦
+      </button>
+
+      <div class="rail-icons">
+        <button class="rail-btn active" data-tab="dashboard" type="button" title="Dashboard">⊞</button>
+        <button class="rail-btn" data-tab="tasks" type="button" title="Tareas y Exámenes">📝</button>
+        <button class="rail-btn" data-tab="subjects" type="button" title="Materias y Promedio">🎓</button>
+        <button class="rail-btn" data-tab="schedule" type="button" title="Horario Semanal">📅</button>
+        <button class="rail-btn" data-tab="pomodoro" type="button" title="Modo Enfoque">⏱️</button>
       </div>
 
-      <div class="sidebar-section">MENÚ</div>
-      <nav class="sidebar-nav" aria-label="Menú principal">
-        <button class="nav-item active" data-tab="dashboard" type="button">
-          <span class="nav-icon">🏠</span>
-          <span>Dashboard</span>
-        </button>
-        <button class="nav-item" data-tab="tasks" type="button">
-          <span class="nav-icon">📝</span>
-          <span>Tareas y Exámenes</span>
-        </button>
-        <button class="nav-item" data-tab="subjects" type="button">
-          <span class="nav-icon">🎓</span>
-          <span>Materias y Promedio</span>
-        </button>
-        <button class="nav-item" data-tab="schedule" type="button">
-          <span class="nav-icon">📅</span>
-          <span>Horario Semanal</span>
-        </button>
-        <button class="nav-item" data-tab="pomodoro" type="button">
-          <span class="nav-icon">⏱️</span>
-          <span>Modo Enfoque</span>
-        </button>
-      </nav>
-
-      <div class="sidebar-section">CUENTA Y DATOS</div>
-      <div class="sidebar-nav">
-        <button class="nav-item" id="auth-open-btn" type="button">
-          <span class="nav-icon">☁️</span>
-          <span id="auth-btn-label">Conectar nube</span>
-        </button>
-        <button class="nav-item" id="export-data" type="button">
-          <span class="nav-icon">💾</span>
-          <span>Exportar respaldo</span>
-        </button>
-        <label class="nav-item file-nav-item">
-          <span class="nav-icon">📂</span>
-          <span>Importar respaldo</span>
-          <input type="file" id="import-data" accept=".json" hidden />
-        </label>
-        <button class="nav-item" id="reset-demo" type="button">
-          <span class="nav-icon">🔄</span>
-          <span>Restaurar ejemplo</span>
-        </button>
+      <div class="rail-bottom">
+        <button class="rail-btn" id="theme-toggle" type="button" title="Cambiar tema">🌙</button>
+        <button class="rail-btn" id="sidebar-toggle" type="button" title="Ocultar/mostrar menú">☰</button>
       </div>
     </aside>
 
-    <!-- CONTENIDO PRINCIPAL -->
-    <div class="main-wrap">
-      <header class="top-navbar">
-        <div class="top-left">
-          <button id="sidebar-toggle" class="hamburger-btn" type="button" aria-label="Mostrar u ocultar menú">
-            ☰
-          </button>
-          <span class="top-date" id="today-label">Panel de Preparatoria</span>
+    <!-- 2. PANEL BLANCO DE NAVEGACIÓN -->
+    <aside class="nav-panel" id="sidebar">
+      <div class="nav-header">
+        <h2>StudyHub</h2>
+        <p id="today-label">Prepa Panel</p>
+      </div>
+
+      <div class="nav-search">
+        <input type="text" id="nav-filter" placeholder="Filtrar menú..." aria-label="Filtrar menú" />
+      </div>
+
+      <div class="nav-tabs-mini">
+        <span class="mini-tab active">Estudiante</span>
+        <span class="mini-tab" id="sync-status-pill">Modo local</span>
+      </div>
+
+      <nav class="nav-list" aria-label="Menú principal">
+        <button class="nav-item active" data-tab="dashboard" type="button">
+          <span>🏠 Dashboard</span>
+          <span class="chev">›</span>
+        </button>
+        <button class="nav-item" data-tab="tasks" type="button">
+          <span>📝 Tareas y Exámenes</span>
+          <span class="chev">›</span>
+        </button>
+        <button class="nav-item" data-tab="subjects" type="button">
+          <span>🎓 Materias y Promedio</span>
+          <span class="chev">›</span>
+        </button>
+        <button class="nav-item" data-tab="schedule" type="button">
+          <span>📅 Horario Semanal</span>
+          <span class="chev">›</span>
+        </button>
+        <button class="nav-item" data-tab="pomodoro" type="button">
+          <span>⏱️ Modo Enfoque</span>
+          <span class="chev">›</span>
+        </button>
+        <button class="nav-item" id="auth-open-btn" type="button">
+          <span>☁️ <span id="auth-btn-label">Conectar nube</span></span>
+          <span class="chev">›</span>
+        </button>
+        <button class="nav-item" id="export-data" type="button">
+          <span>💾 Exportar respaldo</span>
+          <span class="chev">›</span>
+        </button>
+        <label class="nav-item file-nav-item">
+          <span>📂 Importar respaldo</span>
+          <span class="chev">›</span>
+          <input type="file" id="import-data" accept=".json" hidden />
+        </label>
+        <button class="nav-item" id="reset-demo" type="button">
+          <span>🔄 Restaurar ejemplo</span>
+          <span class="chev">›</span>
+        </button>
+      </nav>
+
+      <div class="promo-card" id="promo-focus-btn" role="button" tabindex="0">
+        <strong>Modo Enfoque 25m</strong>
+        <p>Estudia sin distracciones y suma sesiones hoy.</p>
+      </div>
+    </aside>
+
+    <!-- 3. CONTENIDO CENTRAL -->
+    <main class="center-area">
+      <div class="top-search-bar">
+        <span class="search-icon" aria-hidden="true">🔍</span>
+        <input type="text" id="global-search" placeholder="Buscar tareas, materias o clases..." aria-label="Buscar en StudyHub" />
+      </div>
+
+      <div class="subbar-meta">
+        <span>Vista: <strong id="current-view-label">Dashboard</strong></span>
+        <span>Nube: <strong id="ov-cloud">Local (navegador)</strong></span>
+      </div>
+
+      <!-- TAB: DASHBOARD -->
+      <section id="tab-dashboard" class="tab-panel active">
+        <div class="bento-grid">
+          <!-- Columna izquierda: Tablas limpias -->
+          <div class="bento-col">
+            <div class="white-card">
+              <div class="card-top">
+                <h3>Tareas Pendientes</h3>
+                <button class="text-link" type="button" data-jump="tasks">Ver todas</button>
+              </div>
+              <div class="mini-table" id="dash-tasks-table"></div>
+            </div>
+
+            <div class="white-card">
+              <div class="card-top">
+                <h3>Materias y Promedio</h3>
+                <button class="text-link" type="button" data-jump="subjects">Ver todas</button>
+              </div>
+              <div class="mini-table" id="dash-subjects-table"></div>
+            </div>
+          </div>
+
+          <!-- Columna derecha: 4 tarjetas de colores + resumen -->
+          <div class="bento-col">
+            <div class="white-card">
+              <div class="card-top">
+                <h3>Actividad Escolar</h3>
+              </div>
+              <div class="color-cards-grid">
+                <button class="color-card c-sky" type="button" data-jump="tasks">
+                  <span class="cc-title">Pendientes</span>
+                  <span class="cc-desc"><strong id="cc-pending">0</strong> actividades por entregar</span>
+                  <span class="cc-emoji" aria-hidden="true">📝</span>
+                </button>
+
+                <button class="color-card c-indigo" type="button" data-jump="subjects">
+                  <span class="cc-title">Promedio</span>
+                  <span class="cc-desc">General actual: <strong id="cc-avg">—</strong></span>
+                  <span class="cc-emoji" aria-hidden="true">🎓</span>
+                </button>
+
+                <button class="color-card c-orange" type="button" data-jump="schedule">
+                  <span class="cc-title">Horario</span>
+                  <span class="cc-desc"><strong id="cc-classes">0</strong> clases registradas</span>
+                  <span class="cc-emoji" aria-hidden="true">📅</span>
+                </button>
+
+                <button class="color-card c-teal" type="button" data-jump="pomodoro">
+                  <span class="cc-title">Enfoque</span>
+                  <span class="cc-desc"><strong id="cc-focus">0</strong> sesiones completadas</span>
+                  <span class="cc-emoji" aria-hidden="true">⏱️</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="white-card">
+              <div class="card-top">
+                <h3>Próxima Clase / Horario</h3>
+                <button class="text-link" type="button" data-jump="schedule">Ver todo</button>
+              </div>
+              <div class="mini-table" id="dash-schedule-table"></div>
+            </div>
+          </div>
         </div>
-        <div class="top-right">
-          <span class="sync-badge" id="sync-status-pill">Modo local</span>
-          <button id="theme-toggle" class="theme-btn" type="button" title="Cambiar tema" aria-label="Cambiar tema">
-            🌙
-          </button>
-        </div>
-      </header>
+      </section>
 
-      <main class="main-content">
-        <!-- TAB: DASHBOARD -->
-        <section id="tab-dashboard" class="tab-panel active">
-          <div class="panel-card health-card">
-            <div class="health-left">
-              <div class="panel-kicker">RESUMEN ESCOLAR</div>
-              <h2 class="health-title">Tu Semestre</h2>
-              <p class="health-sub" id="dash-greeting">Todo organizado en un solo lugar</p>
-              <button class="btn btn-cobalt" type="button" id="dash-go-tasks">
-                Ir a Tareas →
-              </button>
-              <p class="health-foot">Actualizado en tiempo real</p>
-            </div>
+      <!-- TAB: TAREAS -->
+      <section id="tab-tasks" class="tab-panel">
+        <div class="grid-two">
+          <div class="white-card">
+            <h3 class="section-title">Nueva actividad</h3>
+            <form id="task-form" class="form-stack">
+              <label>
+                ¿Qué tienes que hacer?
+                <input type="text" id="task-title" placeholder="Ej. Ensayo de Historia" required maxlength="80" />
+              </label>
 
-            <div class="gauges-row">
-              <div class="gauge-item">
-                <svg class="seg-gauge" viewBox="0 0 120 120" aria-hidden="true">
-                  <circle class="seg-track" cx="60" cy="60" r="46" />
-                  <circle class="seg-fill" id="gauge-tasks" cx="60" cy="60" r="46" />
-                </svg>
-                <div class="gauge-val" id="gauge-tasks-val">0%</div>
-                <div class="gauge-sub" id="gauge-tasks-sub">0 / 0 listas</div>
-                <div class="gauge-label">Tareas</div>
-              </div>
-
-              <div class="gauge-item">
-                <svg class="seg-gauge" viewBox="0 0 120 120" aria-hidden="true">
-                  <circle class="seg-track" cx="60" cy="60" r="46" />
-                  <circle class="seg-fill" id="gauge-avg" cx="60" cy="60" r="46" />
-                </svg>
-                <div class="gauge-val" id="gauge-avg-val">—</div>
-                <div class="gauge-sub" id="gauge-avg-sub">Escala 0 - 10</div>
-                <div class="gauge-label">Promedio</div>
-              </div>
-
-              <div class="gauge-item">
-                <svg class="seg-gauge" viewBox="0 0 120 120" aria-hidden="true">
-                  <circle class="seg-track" cx="60" cy="60" r="46" />
-                  <circle class="seg-fill" id="gauge-focus" cx="60" cy="60" r="46" />
-                </svg>
-                <div class="gauge-val" id="gauge-focus-val">0</div>
-                <div class="gauge-sub">Meta: 4 hoy</div>
-                <div class="gauge-label">Enfoque</div>
-              </div>
-
-              <div class="gauge-item">
-                <svg class="seg-gauge" viewBox="0 0 120 120" aria-hidden="true">
-                  <circle class="seg-track" cx="60" cy="60" r="46" />
-                  <circle class="seg-fill" id="gauge-subjects" cx="60" cy="60" r="46" />
-                </svg>
-                <div class="gauge-val" id="gauge-subjects-val">0</div>
-                <div class="gauge-sub">Registradas</div>
-                <div class="gauge-label">Materias</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="dash-two-col">
-            <div class="panel-card">
-              <h3 class="card-title">Resumen General</h3>
-              <div class="overview-table">
-                <div class="ov-row">
-                  <span class="ov-key">Tareas pendientes</span>
-                  <span class="ov-val" id="ov-pending">0</span>
-                </div>
-                <div class="ov-row">
-                  <span class="ov-key">Próxima entrega</span>
-                  <span class="ov-val" id="ov-next-task">Sin pendientes</span>
-                </div>
-                <div class="ov-row">
-                  <span class="ov-key">Promedio general</span>
-                  <span class="ov-val" id="stat-average">—</span>
-                </div>
-                <div class="ov-row">
-                  <span class="ov-key">Mejor materia</span>
-                  <span class="ov-val" id="ov-best-subject">—</span>
-                </div>
-                <div class="ov-row">
-                  <span class="ov-key">Clases en horario</span>
-                  <span class="ov-val" id="ov-classes">0</span>
-                </div>
-                <div class="ov-row">
-                  <span class="ov-key">Sincronización</span>
-                  <span class="ov-val" id="ov-cloud">Local (navegador)</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="panel-card">
-              <h3 class="card-title">Estadísticas de Estudio</h3>
-              <div class="usage-list">
-                <div class="usage-row">
-                  <span class="usage-left"><span>📌</span> Pendientes</span>
-                  <strong id="stat-pending">0</strong>
-                </div>
-                <div class="usage-row">
-                  <span class="usage-left"><span>✅</span> Completadas</span>
-                  <strong id="usage-done">0</strong>
-                </div>
-                <div class="usage-row">
-                  <span class="usage-left"><span>🎓</span> Materias</span>
-                  <strong id="usage-subjects">0</strong>
-                </div>
-                <div class="usage-row">
-                  <span class="usage-left"><span>📅</span> Clases semanales</span>
-                  <strong id="usage-classes">0</strong>
-                </div>
-                <div class="usage-row">
-                  <span class="usage-left"><span>🔥</span> Sesiones Pomodoro</span>
-                  <strong id="stat-pomodoros">0</strong>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- TAB: TAREAS -->
-        <section id="tab-tasks" class="tab-panel">
-          <div class="grid-two">
-            <div class="panel-card">
-              <h3 class="card-title">Nueva actividad</h3>
-              <form id="task-form" class="form-stack">
-                <label>
-                  ¿Qué tienes que hacer?
-                  <input type="text" id="task-title" placeholder="Ej. Ensayo de Historia" required maxlength="80" />
-                </label>
-
-                <div class="form-row">
-                  <label>
-                    Materia
-                    <select id="task-subject"></select>
-                  </label>
-                  <label>
-                    Tipo
-                    <select id="task-type">
-                      <option value="Tarea">Tarea</option>
-                      <option value="Examen">Examen</option>
-                      <option value="Proyecto">Proyecto</option>
-                      <option value="Lectura">Lectura</option>
-                    </select>
-                  </label>
-                </div>
-
-                <div class="form-row">
-                  <label>
-                    Entrega
-                    <input type="date" id="task-date" />
-                  </label>
-                  <label>
-                    Prioridad
-                    <select id="task-priority">
-                      <option value="media">Media</option>
-                      <option value="alta">Alta</option>
-                      <option value="baja">Baja</option>
-                    </select>
-                  </label>
-                </div>
-
-                <button type="submit" class="btn btn-cobalt btn-full">+ Agregar actividad</button>
-              </form>
-            </div>
-
-            <div class="panel-card">
-              <div class="card-header">
-                <h3 class="card-title" style="margin:0;">Lista de Tareas y Exámenes</h3>
-                <div class="filters">
-                  <select id="filter-status" aria-label="Filtrar por estado">
-                    <option value="all">Todas</option>
-                    <option value="pending" selected>Pendientes</option>
-                    <option value="done">Completadas</option>
-                  </select>
-                  <select id="filter-subject" aria-label="Filtrar por materia">
-                    <option value="all">Todas las materias</option>
-                  </select>
-                </div>
-              </div>
-              <ul id="task-list" class="item-list"></ul>
-              <div id="task-empty" class="empty-state hidden">
-                <p>No hay actividades en esta vista.</p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- TAB: MATERIAS -->
-        <section id="tab-subjects" class="tab-panel">
-          <div class="grid-two">
-            <div class="panel-card">
-              <h3 class="card-title">Nueva materia</h3>
-              <form id="subject-form" class="form-stack">
-                <label>
-                  Nombre
-                  <input type="text" id="subject-name" placeholder="Ej. Matemáticas" required maxlength="50" />
-                </label>
-                <div class="form-row">
-                  <label>
-                    Profe (opcional)
-                    <input type="text" id="subject-teacher" placeholder="Ej. Prof. García" maxlength="50" />
-                  </label>
-                  <label>
-                    Color
-                    <input type="color" id="subject-color" value="#4c6ef5" />
-                  </label>
-                </div>
-                <button type="submit" class="btn btn-cobalt btn-full">Guardar materia</button>
-              </form>
-
-              <hr class="divider" />
-
-              <h3 class="card-title">Subir calificación</h3>
-              <form id="grade-form" class="form-stack">
+              <div class="form-row">
                 <label>
                   Materia
-                  <select id="grade-subject" required></select>
-                </label>
-                <div class="form-row">
-                  <label>
-                    Rubro
-                    <select id="grade-type">
-                      <option value="Examen">Examen</option>
-                      <option value="Actividades">Actividades</option>
-                      <option value="Proyecto">Proyecto</option>
-                      <option value="Participación">Participación</option>
-                      <option value="Otro">Otro (escribir)</option>
-                    </select>
-                  </label>
-                  <label>
-                    Porcentaje (%)
-                    <input type="number" id="grade-weight" min="1" max="100" step="1" placeholder="Ej. 40" required />
-                  </label>
-                </div>
-                <label id="grade-custom-type-wrap" class="hidden">
-                  Nombre del rubro personalizado
-                  <input type="text" id="grade-custom-type" placeholder="Ej. Laboratorio, Exposición..." maxlength="30" />
-                </label>
-                <div class="form-row">
-                  <label>
-                    Descripción
-                    <input type="text" id="grade-label" placeholder="Ej. Parcial 1" required maxlength="40" />
-                  </label>
-                  <label>
-                    Nota (0 - 10)
-                    <input type="number" id="grade-score" min="0" max="10" step="0.1" placeholder="9.5" required />
-                  </label>
-                </div>
-                <p class="weight-hint" id="weight-hint">Porcentaje asignado en esta materia: 0%</p>
-                <button type="submit" class="btn btn-secondary btn-full">+ Agregar nota</button>
-              </form>
-            </div>
-
-            <div class="panel-card">
-              <div class="card-header">
-                <h3 class="card-title" style="margin:0;">Materias y Promedios</h3>
-                <span class="badge" id="overall-gpa-badge">Promedio: —</span>
-              </div>
-              <div id="subject-list" class="subject-grid"></div>
-              <div id="subject-empty" class="empty-state hidden">
-                <p>Agrega tu primera materia para empezar.</p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- TAB: HORARIO -->
-        <section id="tab-schedule" class="tab-panel">
-          <div class="grid-two">
-            <div class="panel-card">
-              <h3 class="card-title">Agregar clase</h3>
-              <form id="schedule-form" class="form-stack">
-                <label>
-                  Materia
-                  <select id="schedule-subject" required></select>
+                  <select id="task-subject"></select>
                 </label>
                 <label>
-                  Día de la semana
-                  <select id="schedule-day">
-                    <option value="Lunes">Lunes</option>
-                    <option value="Martes">Martes</option>
-                    <option value="Miércoles">Miércoles</option>
-                    <option value="Jueves">Jueves</option>
-                    <option value="Viernes">Viernes</option>
-                    <option value="Sábado">Sábado</option>
+                  Tipo
+                  <select id="task-type">
+                    <option value="Tarea">Tarea</option>
+                    <option value="Examen">Examen</option>
+                    <option value="Proyecto">Proyecto</option>
+                    <option value="Lectura">Lectura</option>
                   </select>
                 </label>
-                <div class="form-row">
-                  <label>
-                    Inicio
-                    <input type="time" id="schedule-start" value="08:00" required />
-                  </label>
-                  <label>
-                    Fin
-                    <input type="time" id="schedule-end" value="09:00" required />
-                  </label>
-                </div>
-                <label>
-                  Salón / Enlace (opcional)
-                  <input type="text" id="schedule-room" placeholder="Ej. Aula 204" maxlength="40" />
-                </label>
-                <button type="submit" class="btn btn-cobalt btn-full">+ Agregar al horario</button>
-              </form>
-            </div>
+              </div>
 
-            <div class="panel-card">
-              <h3 class="card-title">Horario Semanal</h3>
-              <div id="schedule-grid" class="schedule-grid"></div>
-              <div id="schedule-empty" class="empty-state hidden">
-                <p>Aún no tienes clases registradas.</p>
+              <div class="form-row">
+                <label>
+                  Entrega
+                  <input type="date" id="task-date" />
+                </label>
+                <label>
+                  Prioridad
+                  <select id="task-priority">
+                    <option value="media">Media</option>
+                    <option value="alta">Alta</option>
+                    <option value="baja">Baja</option>
+                  </select>
+                </label>
+              </div>
+
+              <button type="submit" class="btn btn-sky btn-full">+ Agregar actividad</button>
+            </form>
+          </div>
+
+          <div class="white-card">
+            <div class="card-top">
+              <h3>Lista de Tareas y Exámenes</h3>
+              <div class="filters">
+                <select id="filter-status" aria-label="Filtrar por estado">
+                  <option value="all">Todas</option>
+                  <option value="pending" selected>Pendientes</option>
+                  <option value="done">Completadas</option>
+                </select>
+                <select id="filter-subject" aria-label="Filtrar por materia">
+                  <option value="all">Todas las materias</option>
+                </select>
               </div>
             </div>
+            <ul id="task-list" class="item-list"></ul>
+            <div id="task-empty" class="empty-state hidden">
+              <p>No hay actividades en esta vista.</p>
+            </div>
           </div>
-        </section>
+        </div>
+      </section>
 
-        <!-- TAB: POMODORO -->
-        <section id="tab-pomodoro" class="tab-panel">
-          <div class="panel-card pomodoro-card">
-            <h3 class="card-title">Temporizador de Enfoque</h3>
-            <p class="muted">Estudia sin distracciones en bloques cortos.</p>
+      <!-- TAB: MATERIAS -->
+      <section id="tab-subjects" class="tab-panel">
+        <div class="grid-two">
+          <div class="white-card">
+            <h3 class="section-title">Nueva materia</h3>
+            <form id="subject-form" class="form-stack">
+              <label>
+                Nombre
+                <input type="text" id="subject-name" placeholder="Ej. Matemáticas" required maxlength="50" />
+              </label>
+              <div class="form-row">
+                <label>
+                  Profe (opcional)
+                  <input type="text" id="subject-teacher" placeholder="Ej. Prof. García" maxlength="50" />
+                </label>
+                <label>
+                  Color
+                  <input type="color" id="subject-color" value="#38a5e8" />
+                </label>
+              </div>
+              <button type="submit" class="btn btn-sky btn-full">Guardar materia</button>
+            </form>
 
-            <div class="mode-switch">
-              <button class="mode-btn active" data-minutes="25" data-mode="focus">Estudio 25m</button>
-              <button class="mode-btn" data-minutes="5" data-mode="short">Descanso 5m</button>
-              <button class="mode-btn" data-minutes="15" data-mode="long">Largo 15m</button>
-            </div>
+            <hr class="divider" />
 
-            <div class="timer-ring-wrap">
-              <svg class="timer-ring" viewBox="0 0 180 180" aria-hidden="true">
-                <circle class="timer-ring-bg" cx="90" cy="90" r="80" />
-                <circle class="timer-ring-progress" id="timer-ring-progress" cx="90" cy="90" r="80" />
-              </svg>
-              <div class="timer-display" id="timer-display">25:00</div>
-            </div>
-
-            <div class="timer-controls">
-              <button id="timer-start" class="btn btn-cobalt">Iniciar</button>
-              <button id="timer-pause" class="btn btn-secondary" disabled>Pausar</button>
-              <button id="timer-reset" class="btn btn-ghost">Reiniciar</button>
-            </div>
-
-            <p class="session-counter">
-              Sesiones completadas hoy: <strong id="pomodoro-count">0</strong>
-            </p>
+            <h3 class="section-title">Subir calificación</h3>
+            <form id="grade-form" class="form-stack">
+              <label>
+                Materia
+                <select id="grade-subject" required></select>
+              </label>
+              <div class="form-row">
+                <label>
+                  Rubro
+                  <select id="grade-type">
+                    <option value="Examen">Examen</option>
+                    <option value="Actividades">Actividades</option>
+                    <option value="Proyecto">Proyecto</option>
+                    <option value="Participación">Participación</option>
+                    <option value="Otro">Otro (escribir)</option>
+                  </select>
+                </label>
+                <label>
+                  Porcentaje (%)
+                  <input type="number" id="grade-weight" min="1" max="100" step="1" placeholder="Ej. 40" required />
+                </label>
+              </div>
+              <label id="grade-custom-type-wrap" class="hidden">
+                Nombre del rubro personalizado
+                <input type="text" id="grade-custom-type" placeholder="Ej. Laboratorio, Exposición..." maxlength="30" />
+              </label>
+              <div class="form-row">
+                <label>
+                  Descripción
+                  <input type="text" id="grade-label" placeholder="Ej. Parcial 1" required maxlength="40" />
+                </label>
+                <label>
+                  Nota (0 - 10)
+                  <input type="number" id="grade-score" min="0" max="10" step="0.1" placeholder="9.5" required />
+                </label>
+              </div>
+              <p class="weight-hint" id="weight-hint">Porcentaje asignado en esta materia: 0%</p>
+              <button type="submit" class="btn btn-secondary btn-full">+ Agregar nota</button>
+            </form>
           </div>
-        </section>
-      </main>
 
-      <footer class="footer">
-        <span>2026 © StudyHub · Organizador Escolar</span>
-      </footer>
-    </div>
+          <div class="white-card">
+            <div class="card-top">
+              <h3>Materias y Promedios</h3>
+              <span class="badge" id="overall-gpa-badge">Promedio: —</span>
+            </div>
+            <div id="subject-list" class="subject-grid"></div>
+            <div id="subject-empty" class="empty-state hidden">
+              <p>Agrega tu primera materia para empezar.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB: HORARIO -->
+      <section id="tab-schedule" class="tab-panel">
+        <div class="grid-two">
+          <div class="white-card">
+            <h3 class="section-title">Agregar clase</h3>
+            <form id="schedule-form" class="form-stack">
+              <label>
+                Materia
+                <select id="schedule-subject" required></select>
+              </label>
+              <label>
+                Día de la semana
+                <select id="schedule-day">
+                  <option value="Lunes">Lunes</option>
+                  <option value="Martes">Martes</option>
+                  <option value="Miércoles">Miércoles</option>
+                  <option value="Jueves">Jueves</option>
+                  <option value="Viernes">Viernes</option>
+                  <option value="Sábado">Sábado</option>
+                </select>
+              </label>
+              <div class="form-row">
+                <label>
+                  Inicio
+                  <input type="time" id="schedule-start" value="08:00" required />
+                </label>
+                <label>
+                  Fin
+                  <input type="time" id="schedule-end" value="09:00" required />
+                </label>
+              </div>
+              <label>
+                Salón / Enlace (opcional)
+                <input type="text" id="schedule-room" placeholder="Ej. Aula 204" maxlength="40" />
+              </label>
+              <button type="submit" class="btn btn-sky btn-full">+ Agregar al horario</button>
+            </form>
+          </div>
+
+          <div class="white-card">
+            <h3 class="section-title">Horario Semanal</h3>
+            <div id="schedule-grid" class="schedule-grid"></div>
+            <div id="schedule-empty" class="empty-state hidden">
+              <p>Aún no tienes clases registradas.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB: POMODORO -->
+      <section id="tab-pomodoro" class="tab-panel">
+        <div class="white-card pomodoro-card">
+          <h3 class="section-title">Temporizador de Enfoque</h3>
+          <p class="muted">Estudia sin distracciones en bloques cortos.</p>
+
+          <div class="mode-switch">
+            <button class="mode-btn active" data-minutes="25" data-mode="focus">Estudio 25m</button>
+            <button class="mode-btn" data-minutes="5" data-mode="short">Descanso 5m</button>
+            <button class="mode-btn" data-minutes="15" data-mode="long">Largo 15m</button>
+          </div>
+
+          <div class="timer-ring-wrap">
+            <svg class="timer-ring" viewBox="0 0 180 180" aria-hidden="true">
+              <circle class="timer-ring-bg" cx="90" cy="90" r="80" />
+              <circle class="timer-ring-progress" id="timer-ring-progress" cx="90" cy="90" r="80" />
+            </svg>
+            <div class="timer-display" id="timer-display">25:00</div>
+          </div>
+
+          <div class="timer-controls">
+            <button id="timer-start" class="btn btn-sky">Iniciar</button>
+            <button id="timer-pause" class="btn btn-secondary" disabled>Pausar</button>
+            <button id="timer-reset" class="btn btn-ghost">Reiniciar</button>
+          </div>
+
+          <p class="session-counter">
+            Sesiones completadas hoy: <strong id="pomodoro-count">0</strong>
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <!-- 4. PANEL DERECHO DE PERFIL Y RESUMEN -->
+    <aside class="right-panel" aria-label="Resumen personal">
+      <div class="greeting-box">
+        <h3 id="right-greeting">¡Hola, Estudiante! 👋</h3>
+      </div>
+
+      <div class="quick-kv">
+        <div class="kv-row">
+          <span>Enlace rápido</span>
+          <button class="text-link" type="button" id="right-cloud-btn">Nube</button>
+        </div>
+        <div class="kv-row">
+          <span>Materias</span>
+          <strong id="usage-subjects">0</strong>
+        </div>
+        <div class="kv-row">
+          <span>Pendientes</span>
+          <strong id="stat-pending">0</strong>
+        </div>
+        <div class="kv-row">
+          <span>Completadas</span>
+          <strong id="usage-done">0</strong>
+        </div>
+      </div>
+
+      <div class="stat-pill-card">
+        <div class="pill-circle">🎓</div>
+        <div>
+          <span class="pill-title">Promedio General</span>
+          <strong class="pill-value" id="stat-average">—</strong>
+        </div>
+      </div>
+
+      <div class="stat-pill-card">
+        <div class="pill-circle">🔥</div>
+        <div>
+          <span class="pill-title">Sesiones Enfoque</span>
+          <strong class="pill-value" id="stat-pomodoros">0</strong>
+        </div>
+      </div>
+
+      <div class="stat-pill-card">
+        <div class="pill-circle">📅</div>
+        <div>
+          <span class="pill-title">Clases Semanales</span>
+          <strong class="pill-value" id="usage-classes">0</strong>
+        </div>
+      </div>
+
+      <div class="notices-box">
+        <h4>Próximas fechas</h4>
+        <div id="upcoming-notices" class="notices-list"></div>
+      </div>
+    </aside>
   </div>
 
   <!-- MODAL DE CUENTA / NUBE -->
   <div id="auth-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="auth-modal-title">
     <div class="modal-card">
-      <div class="card-header" style="margin-bottom:10px;">
-        <h3 class="card-title" id="auth-modal-title" style="margin:0;">Sincronizar con Supabase</h3>
+      <div class="card-top" style="margin-bottom:10px;">
+        <h3 id="auth-modal-title">Sincronizar con Supabase</h3>
         <button id="auth-close-btn" class="icon-btn" type="button" aria-label="Cerrar">✕</button>
       </div>
 
@@ -457,7 +478,7 @@
             <input type="password" id="auth-password" placeholder="••••••" minlength="6" required />
           </label>
           <div class="form-row">
-            <button type="submit" id="auth-signin-btn" class="btn btn-cobalt">Iniciar sesión</button>
+            <button type="submit" id="auth-signin-btn" class="btn btn-sky">Iniciar sesión</button>
             <button type="button" id="auth-signup-btn" class="btn btn-secondary">Crear cuenta</button>
           </div>
         </form>
@@ -468,7 +489,7 @@
           Conectado como <strong id="auth-user-email"></strong>
         </p>
         <div class="form-row">
-          <button type="button" id="sync-now-btn" class="btn btn-cobalt">Sincronizar ahora</button>
+          <button type="button" id="sync-now-btn" class="btn btn-sky">Sincronizar ahora</button>
           <button type="button" id="auth-signout-btn" class="btn btn-secondary">Cerrar sesión</button>
         </div>
       </div>

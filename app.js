@@ -143,22 +143,66 @@ if (sidebarToggle && sidebar) {
   });
 }
 
+const TAB_LABELS = {
+  dashboard: "Dashboard",
+  tasks: "Tareas y Exámenes",
+  subjects: "Materias y Promedio",
+  schedule: "Horario Semanal",
+  pomodoro: "Modo Enfoque",
+};
+
 function switchTab(tabName) {
-  document.querySelectorAll(".nav-item[data-tab]").forEach((b) => {
+  document.querySelectorAll(".nav-item[data-tab], .rail-btn[data-tab]").forEach((b) => {
     b.classList.toggle("active", b.dataset.tab === tabName);
   });
   document.querySelectorAll(".tab-panel").forEach((p) => {
     p.classList.toggle("active", p.id === `tab-${tabName}`);
   });
+  const viewLabel = document.getElementById("current-view-label");
+  if (viewLabel && TAB_LABELS[tabName]) viewLabel.textContent = TAB_LABELS[tabName];
 }
 
-document.querySelectorAll(".nav-item[data-tab]").forEach((btn) => {
+document.querySelectorAll("[data-tab]").forEach((btn) => {
   btn.addEventListener("click", () => switchTab(btn.dataset.tab));
 });
 
-const dashGoTasks = document.getElementById("dash-go-tasks");
-if (dashGoTasks) {
-  dashGoTasks.addEventListener("click", () => switchTab("tasks"));
+document.querySelectorAll("[data-jump]").forEach((btn) => {
+  btn.addEventListener("click", () => switchTab(btn.dataset.jump));
+});
+
+const promoFocusBtn = document.getElementById("promo-focus-btn");
+if (promoFocusBtn) {
+  promoFocusBtn.addEventListener("click", () => switchTab("pomodoro"));
+}
+
+const navFilter = document.getElementById("nav-filter");
+if (navFilter) {
+  navFilter.addEventListener("input", () => {
+    const q = navFilter.value.trim().toLowerCase();
+    document.querySelectorAll(".nav-list .nav-item").forEach((item) => {
+      item.classList.toggle("hidden-nav", q && !item.textContent.toLowerCase().includes(q));
+    });
+  });
+}
+
+const globalSearch = document.getElementById("global-search");
+if (globalSearch) {
+  globalSearch.addEventListener("input", () => {
+    const q = globalSearch.value.trim().toLowerCase();
+    if (!q) return;
+    if (state.tasks.some((t) => t.title.toLowerCase().includes(q))) {
+      switchTab("tasks");
+    } else if (state.subjects.some((s) => s.name.toLowerCase().includes(q))) {
+      switchTab("subjects");
+    }
+  });
+}
+
+const rightCloudBtn = document.getElementById("right-cloud-btn");
+if (rightCloudBtn) {
+  rightCloudBtn.addEventListener("click", () => {
+    document.getElementById("auth-open-btn").click();
+  });
 }
 
 // --- Cálculos de promedio ---
@@ -396,14 +440,70 @@ function renderSubjects() {
   });
 }
 
-function setGauge(elId, pct) {
-  const el = document.getElementById(elId);
-  if (!el) return;
-  const r = 46;
-  const circ = 2 * Math.PI * r;
-  const clamped = Math.max(0, Math.min(100, pct));
-  el.style.strokeDasharray = `${circ}`;
-  el.style.strokeDashoffset = `${circ * (1 - clamped / 100)}`;
+function renderDashboardTables() {
+  const tasksTable = document.getElementById("dash-tasks-table");
+  if (tasksTable) {
+    const pendingList = state.tasks.filter((t) => !t.done).slice(0, 4);
+    tasksTable.innerHTML = pendingList.length
+      ? pendingList
+          .map((t) => {
+            const sub = state.subjects.find((s) => s.id === t.subjectId);
+            const due = formatDueBadge(t.dueDate);
+            return `<div class="mini-row">
+              <div><span class="mini-main">${t.title}</span><div class="mini-sub">${sub ? sub.name : "General"} · ${t.type}</div></div>
+              <span class="mini-sub">${due ? due.text : "Sin fecha"}</span>
+            </div>`;
+          })
+          .join("")
+      : `<div class="mini-row"><span class="mini-sub">¡Todo al día! No tienes tareas pendientes.</span></div>`;
+  }
+
+  const subjectsTable = document.getElementById("dash-subjects-table");
+  if (subjectsTable) {
+    subjectsTable.innerHTML = state.subjects.length
+      ? state.subjects
+          .slice(0, 4)
+          .map((s) => {
+            const avg = getSubjectAverage(s);
+            return `<div class="mini-row">
+              <div><span class="mini-main">${s.name}</span><div class="mini-sub">${s.teacher || "Sin profesor"}</div></div>
+              <strong>${avg !== null ? avg.toFixed(2) : "—"}</strong>
+            </div>`;
+          })
+          .join("")
+      : `<div class="mini-row"><span class="mini-sub">Aún no registras materias.</span></div>`;
+  }
+
+  const scheduleTable = document.getElementById("dash-schedule-table");
+  if (scheduleTable) {
+    scheduleTable.innerHTML = state.schedule.length
+      ? state.schedule
+          .slice(0, 4)
+          .map((c) => {
+            const sub = state.subjects.find((s) => s.id === c.subjectId);
+            return `<div class="mini-row">
+              <div><span class="mini-main">${sub ? sub.name : "Clase"}</span><div class="mini-sub">${c.day} · ${c.start} - ${c.end}</div></div>
+              <span class="mini-sub">${c.room || "—"}</span>
+            </div>`;
+          })
+          .join("")
+      : `<div class="mini-row"><span class="mini-sub">Sin clases registradas.</span></div>`;
+  }
+
+  const notices = document.getElementById("upcoming-notices");
+  if (notices) {
+    const upcoming = state.tasks
+      .filter((t) => !t.done)
+      .slice(0, 3);
+    notices.innerHTML = upcoming.length
+      ? upcoming
+          .map((t) => {
+            const due = formatDueBadge(t.dueDate);
+            return `<div class="notice-item"><strong>${t.title}</strong><span>${due ? due.text : "Pendiente"} · ${t.type}</span></div>`;
+          })
+          .join("")
+      : `<div class="notice-item"><span>No hay entregas próximas 🎉</span></div>`;
+  }
 }
 
 function renderStats() {
@@ -420,48 +520,14 @@ function renderStats() {
   const statPomodoros = document.getElementById("stat-pomodoros");
   if (statPomodoros) statPomodoros.textContent = state.pomodoroCount;
 
-  // Dashboard gauges
-  const taskPct = totalTasks ? Math.round((doneTasks / totalTasks) * 100) : 100;
-  setGauge("gauge-tasks", taskPct);
-  const gTasksVal = document.getElementById("gauge-tasks-val");
-  const gTasksSub = document.getElementById("gauge-tasks-sub");
-  if (gTasksVal) gTasksVal.textContent = `${taskPct}%`;
-  if (gTasksSub) gTasksSub.textContent = `${doneTasks} / ${totalTasks} listas`;
-
-  const avgPct = overall !== null ? (overall / 10) * 100 : 0;
-  setGauge("gauge-avg", avgPct);
-  const gAvgVal = document.getElementById("gauge-avg-val");
-  if (gAvgVal) gAvgVal.textContent = formatted;
-
-  const focusPct = Math.min(100, (state.pomodoroCount / 4) * 100);
-  setGauge("gauge-focus", focusPct);
-  const gFocusVal = document.getElementById("gauge-focus-val");
-  if (gFocusVal) gFocusVal.textContent = state.pomodoroCount;
-
-  const subPct = Math.min(100, (state.subjects.length / 8) * 100);
-  setGauge("gauge-subjects", subPct);
-  const gSubVal = document.getElementById("gauge-subjects-val");
-  if (gSubVal) gSubVal.textContent = state.subjects.length;
-
-  // Overview & Usage stats
-  const ovPending = document.getElementById("ov-pending");
-  if (ovPending) ovPending.textContent = `${pending} pendientes`;
-
-  const nextTask = state.tasks
-    .filter((t) => !t.done && t.dueDate)
-    .sort((a, b) => a.dueDate.localeCompare(b.dueDate))[0];
-  const ovNext = document.getElementById("ov-next-task");
-  if (ovNext) ovNext.textContent = nextTask ? `${nextTask.title} (${nextTask.dueDate})` : "Sin fechas próximas";
-
-  const bestSub = state.subjects
-    .map((s) => ({ name: s.name, avg: getSubjectAverage(s) }))
-    .filter((s) => s.avg !== null)
-    .sort((a, b) => b.avg - a.avg)[0];
-  const ovBest = document.getElementById("ov-best-subject");
-  if (ovBest) ovBest.textContent = bestSub ? `${bestSub.name} (${bestSub.avg.toFixed(2)})` : "—";
-
-  const ovClasses = document.getElementById("ov-classes");
-  if (ovClasses) ovClasses.textContent = `${state.schedule.length} clases`;
+  const ccPending = document.getElementById("cc-pending");
+  const ccAvg = document.getElementById("cc-avg");
+  const ccClasses = document.getElementById("cc-classes");
+  const ccFocus = document.getElementById("cc-focus");
+  if (ccPending) ccPending.textContent = pending;
+  if (ccAvg) ccAvg.textContent = formatted;
+  if (ccClasses) ccClasses.textContent = state.schedule.length;
+  if (ccFocus) ccFocus.textContent = state.pomodoroCount;
 
   const usageDone = document.getElementById("usage-done");
   const usageSubs = document.getElementById("usage-subjects");
@@ -469,6 +535,8 @@ function renderStats() {
   if (usageDone) usageDone.textContent = doneTasks;
   if (usageSubs) usageSubs.textContent = state.subjects.length;
   if (usageClasses) usageClasses.textContent = state.schedule.length;
+
+  renderDashboardTables();
 }
 
 const DAYS_ORDER = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
@@ -822,14 +890,17 @@ function clearAuthMsg() {
 function updateAuthUI() {
   const syncPill = document.getElementById("sync-status-pill");
   const ovCloud = document.getElementById("ov-cloud");
+  const rightGreeting = document.getElementById("right-greeting");
   if (currentUser) {
+    const shortName = currentUser.email.split("@")[0];
     authOpenBtn.classList.add("connected");
-    authBtnLabel.textContent = currentUser.email.split("@")[0];
+    authBtnLabel.textContent = shortName;
     if (syncPill) {
-      syncPill.textContent = `☁️ ${currentUser.email}`;
+      syncPill.textContent = `☁️ ${shortName}`;
       syncPill.classList.add("connected");
     }
     if (ovCloud) ovCloud.textContent = `Nube (${currentUser.email})`;
+    if (rightGreeting) rightGreeting.textContent = `¡Hola, ${shortName}! 👋`;
     authLoggedOut.classList.add("hidden");
     authLoggedIn.classList.remove("hidden");
     authUserEmail.textContent = currentUser.email;
@@ -841,6 +912,7 @@ function updateAuthUI() {
       syncPill.classList.remove("connected");
     }
     if (ovCloud) ovCloud.textContent = "Local (navegador)";
+    if (rightGreeting) rightGreeting.textContent = "¡Hola, Estudiante! 👋";
     authLoggedOut.classList.remove("hidden");
     authLoggedIn.classList.add("hidden");
     authUserEmail.textContent = "";
