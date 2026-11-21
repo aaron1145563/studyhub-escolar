@@ -10,42 +10,68 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <!-- PANTALLA DE LOGIN PARA ESTUDIANTES -->
+  <!-- PANTALLA DE LOGIN Y REGISTRO PARA ESTUDIANTES -->
   <section id="login-screen" class="login-screen">
-    <div class="login-card">
-      <div class="login-brand">
-        <div class="login-logo" aria-hidden="true">✦</div>
-        <div>
-          <h1>StudyHub</h1>
-          <p>Panel Escolar de Preparatoria</p>
+    <div class="purple-auth-card">
+      <div class="purple-auth-header">
+        <div class="login-logo-sm" aria-hidden="true">✦</div>
+        <h1 id="auth-card-heading">CREAR CUENTA</h1>
+        <p class="purple-sub">StudyHub · Panel Escolar</p>
+      </div>
+
+      <div class="purple-mode-tabs">
+        <button type="button" class="purple-tab active" id="login-tab-signup">Crear cuenta</button>
+        <button type="button" class="purple-tab" id="login-tab-signin">Iniciar sesión</button>
+      </div>
+
+      <form id="login-form" class="purple-form">
+        <div class="icon-input-row" id="login-name-wrap">
+          <span class="input-circle-icon" aria-hidden="true">👤</span>
+          <input type="text" id="login-name" placeholder="Nombre completo" maxlength="60" required />
         </div>
-      </div>
 
-      <div class="login-tabs">
-        <button type="button" class="login-tab active" id="login-tab-signin">Iniciar sesión</button>
-        <button type="button" class="login-tab" id="login-tab-signup">Crear cuenta</button>
-      </div>
+        <div class="icon-input-row">
+          <span class="input-circle-icon" aria-hidden="true">✉️</span>
+          <input type="email" id="login-email" placeholder="Correo electrónico" required />
+        </div>
 
-      <form id="login-form" class="form-stack">
-        <label id="login-name-wrap" class="hidden">
-          Nombre completo
-          <input type="text" id="login-name" placeholder="Ej. Aarón Hernández" maxlength="60" />
-        </label>
-        <label>
-          Correo electrónico
-          <input type="email" id="login-email" placeholder="tu@correo.com" required />
-        </label>
-        <label>
-          Contraseña (mín. 6 caracteres)
-          <input type="password" id="login-password" placeholder="••••••" minlength="6" required />
-        </label>
-        <button type="submit" id="login-submit-btn" class="btn btn-sky btn-full">Entrar a mi panel</button>
+        <div class="icon-input-row">
+          <span class="input-circle-icon" aria-hidden="true">🔒</span>
+          <input type="password" id="login-password" placeholder="Contraseña (mín. 6 caracteres)" minlength="6" required />
+        </div>
+
+        <div class="icon-input-row" id="login-confirm-wrap">
+          <span class="input-circle-icon" aria-hidden="true">🔐</span>
+          <input type="password" id="login-confirm-password" placeholder="Confirmar contraseña" minlength="6" required />
+        </div>
+
+        <div class="icon-input-row" id="login-phone-wrap">
+          <span class="input-circle-icon" aria-hidden="true">📞</span>
+          <input type="tel" id="login-phone" placeholder="Número de teléfono (opcional)" maxlength="20" />
+        </div>
+
+        <div class="purple-checks">
+          <label class="purple-check">
+            <input type="checkbox" id="login-remember" checked />
+            <span>Recordarme</span>
+          </label>
+          <label class="purple-check" id="login-newsletter-wrap">
+            <input type="checkbox" id="login-newsletter" checked />
+            <span>Avisos por correo</span>
+          </label>
+        </div>
+
+        <button type="submit" id="login-submit-btn" class="btn-register-purple">REGISTRARME</button>
       </form>
 
       <p id="login-message" class="auth-message hidden"></p>
 
+      <button type="button" id="resend-email-btn" class="purple-resend-btn hidden">
+        Reenviar correo de confirmación
+      </button>
+
       <div class="login-footer">
-        <button type="button" id="guest-enter-btn" class="text-link">
+        <button type="button" id="guest-enter-btn" class="purple-ghost-link">
           Entrar sin cuenta (solo en este dispositivo)
         </button>
       </div>

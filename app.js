@@ -865,19 +865,37 @@ resetBtn.addEventListener("click", () => {
 renderAll();
 updateTimerUI();
 
-// --- Pantalla de Login vs App Shell ---
+// --- Pantalla de Login / Registro ---
+const REMEMBER_EMAIL_KEY = "studyhub_remember_email";
 const loginScreen = document.getElementById("login-screen");
 const appShell = document.getElementById("app-shell");
+const authCardHeading = document.getElementById("auth-card-heading");
 const loginTabSignin = document.getElementById("login-tab-signin");
 const loginTabSignup = document.getElementById("login-tab-signup");
 const loginNameWrap = document.getElementById("login-name-wrap");
 const loginNameInput = document.getElementById("login-name");
+const loginEmailInput = document.getElementById("login-email");
+const loginPasswordInput = document.getElementById("login-password");
+const loginConfirmWrap = document.getElementById("login-confirm-wrap");
+const loginConfirmInput = document.getElementById("login-confirm-password");
+const loginPhoneWrap = document.getElementById("login-phone-wrap");
+const loginPhoneInput = document.getElementById("login-phone");
+const loginRememberCheck = document.getElementById("login-remember");
+const loginNewsletterWrap = document.getElementById("login-newsletter-wrap");
+const loginNewsletterCheck = document.getElementById("login-newsletter");
 const loginForm = document.getElementById("login-form");
 const loginSubmitBtn = document.getElementById("login-submit-btn");
 const loginMessage = document.getElementById("login-message");
+const resendEmailBtn = document.getElementById("resend-email-btn");
 const guestEnterBtn = document.getElementById("guest-enter-btn");
 
-let loginMode = "signin";
+let loginMode = "signup";
+let lastSignupEmail = "";
+
+const savedRememberedEmail = localStorage.getItem(REMEMBER_EMAIL_KEY);
+if (savedRememberedEmail && loginEmailInput) {
+  loginEmailInput.value = savedRememberedEmail;
+}
 
 function showScreen(showApp) {
   if (loginScreen) loginScreen.classList.toggle("hidden", showApp);
@@ -894,6 +912,7 @@ function clearLoginMsg() {
   if (!loginMessage) return;
   loginMessage.textContent = "";
   loginMessage.className = "auth-message hidden";
+  if (resendEmailBtn) resendEmailBtn.classList.add("hidden");
 }
 
 function setLoginMode(mode) {
@@ -902,9 +921,14 @@ function setLoginMode(mode) {
   const isSignup = mode === "signup";
   loginTabSignin.classList.toggle("active", !isSignup);
   loginTabSignup.classList.toggle("active", isSignup);
+  if (authCardHeading) authCardHeading.textContent = isSignup ? "CREAR CUENTA" : "INICIAR SESIÓN";
   loginNameWrap.classList.toggle("hidden", !isSignup);
+  loginConfirmWrap.classList.toggle("hidden", !isSignup);
+  loginPhoneWrap.classList.toggle("hidden", !isSignup);
+  if (loginNewsletterWrap) loginNewsletterWrap.classList.toggle("hidden", !isSignup);
   loginNameInput.required = isSignup;
-  loginSubmitBtn.textContent = isSignup ? "Crear cuenta de estudiante" : "Entrar a mi panel";
+  loginConfirmInput.required = isSignup;
+  loginSubmitBtn.textContent = isSignup ? "REGISTRARME" : "ENTRAR A MI PANEL";
 }
 
 if (loginTabSignin && loginTabSignup) {
@@ -984,11 +1008,15 @@ async function saveCloudWorkspace() {
     studentDisplayName ||
     currentUser.user_metadata?.full_name ||
     currentUser.email.split("@")[0];
+  const phone = currentUser.user_metadata?.phone || "";
+  const emailNotifs = currentUser.user_metadata?.email_notifications ?? true;
   authBtnLabel.textContent = "Guardando...";
   const { error } = await supabaseClient.from("studyhub_workspaces").upsert(
     {
       user_id: currentUser.id,
       student_name: displayName,
+      student_phone: phone,
+      email_notifications: emailNotifs,
       data: state,
       updated_at: new Date().toISOString(),
     },
@@ -1053,19 +1081,39 @@ if (supabaseClient) {
     loginForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       clearLoginMsg();
-      const email = document.getElementById("login-email").value.trim();
-      const password = document.getElementById("login-password").value;
+      const email = loginEmailInput.value.trim();
+      const password = loginPasswordInput.value;
+      const confirmPass = loginConfirmInput ? loginConfirmInput.value : "";
       const fullName = loginNameInput ? loginNameInput.value.trim() : "";
+      const phone = loginPhoneInput ? loginPhoneInput.value.trim() : "";
+      const remember = loginRememberCheck ? loginRememberCheck.checked : true;
+      const emailNotifs = loginNewsletterCheck ? loginNewsletterCheck.checked : true;
+
+      if (remember) {
+        localStorage.setItem(REMEMBER_EMAIL_KEY, email);
+      } else {
+        localStorage.removeItem(REMEMBER_EMAIL_KEY);
+      }
 
       if (loginMode === "signup") {
+        if (password !== confirmPass) {
+          showLoginMsg("Las contraseñas no coinciden.", "error");
+          return;
+        }
+        loginSubmitBtn.disabled = true;
         const { data, error } = await supabaseClient.auth.signUp({
           email,
           password,
           options: {
-            data: { full_name: fullName },
+            data: {
+              full_name: fullName,
+              phone,
+              email_notifications: emailNotifs,
+            },
             emailRedirectTo: window.location.origin + window.location.pathname,
           },
         });
+        loginSubmitBtn.disabled = false;
         if (error) {
           showLoginMsg(error.message, "error");
           return;
@@ -1077,19 +1125,23 @@ if (supabaseClient) {
           showScreen(true);
           await loadCloudWorkspace();
         } else {
+          lastSignupEmail = email;
           showLoginMsg(
-            "¡Cuenta creada! Revisa tu correo para confirmar tu cuenta y luego inicia sesión.",
+            `✅ ¡Cuenta creada! Enviamos un correo de confirmación a ${email}. Ábrelo para activar tu cuenta.`,
             "success"
           );
+          if (resendEmailBtn) resendEmailBtn.classList.remove("hidden");
         }
         return;
       }
 
+      loginSubmitBtn.disabled = true;
       const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      loginSubmitBtn.disabled = false;
       if (error) {
         const msg =
           error.message === "Invalid login credentials"
-            ? "Correo o contraseña incorrectos. Si es tu primera vez, usa «Crear cuenta»."
+            ? "Correo o contraseña incorrectos. Si aún no tienes cuenta, usa «Crear cuenta»."
             : error.message;
         showLoginMsg(msg, "error");
         return;
@@ -1098,6 +1150,27 @@ if (supabaseClient) {
       updateAuthUI();
       showScreen(true);
       await loadCloudWorkspace();
+    });
+  }
+
+  if (resendEmailBtn) {
+    resendEmailBtn.addEventListener("click", async () => {
+      const targetEmail = lastSignupEmail || loginEmailInput.value.trim();
+      if (!targetEmail) return;
+      resendEmailBtn.disabled = true;
+      const { error } = await supabaseClient.auth.resend({
+        type: "signup",
+        email: targetEmail,
+        options: {
+          emailRedirectTo: window.location.origin + window.location.pathname,
+        },
+      });
+      resendEmailBtn.disabled = false;
+      if (error) {
+        showLoginMsg(error.message, "error");
+      } else {
+        showLoginMsg(`📩 Correo reenviado a ${targetEmail}. Revisa tu bandeja o spam.`, "success");
+      }
     });
   }
 
