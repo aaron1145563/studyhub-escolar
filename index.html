@@ -346,18 +346,12 @@
           <div class="partials-bar-left">
             <div>
               <h3 class="section-title" style="margin:0;">Parciales del semestre</h3>
-              <p class="muted" style="margin:2px 0 0;">Elige cuántos parciales tiene tu escuela y consulta cada uno</p>
+              <p class="muted" style="margin:2px 0 0;">Crea tus propios parciales y consulta el promedio de cada uno</p>
             </div>
-            <label class="partials-count-label">
-              Cantidad de parciales
-              <select id="partials-count-select">
-                <option value="2">2 parciales</option>
-                <option value="3" selected>3 parciales</option>
-                <option value="4">4 parciales</option>
-                <option value="5">5 parciales</option>
-                <option value="6">6 parciales</option>
-              </select>
-            </label>
+            <form id="partial-form" class="partial-form-inline">
+              <input type="text" id="partial-name-input" placeholder="Ej. Parcial 4, Final..." maxlength="30" required />
+              <button type="submit" class="btn btn-sky">+ Crear parcial</button>
+            </form>
           </div>
           <div id="partials-pills" class="partials-pills"></div>
         </div>
