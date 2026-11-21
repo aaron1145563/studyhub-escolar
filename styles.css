@@ -211,6 +211,10 @@ body {
 
 .file-nav-item {
   margin: 0;
+  flex-direction: row;
+  font-size: 0.84rem;
+  font-weight: 500;
+  color: var(--text);
 }
 
 .promo-card {

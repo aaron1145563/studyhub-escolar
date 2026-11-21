@@ -986,7 +986,10 @@ if (supabaseClient) {
     const password = document.getElementById("auth-password").value;
     const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
     if (error) {
-      showAuthMsg(error.message, "error");
+      const msg = error.message === "Invalid login credentials"
+        ? "Correo o contraseña incorrectos. Si es tu primera vez, dale clic en «Crear cuenta»."
+        : error.message;
+      showAuthMsg(msg, "error");
       return;
     }
     currentUser = data.user;
